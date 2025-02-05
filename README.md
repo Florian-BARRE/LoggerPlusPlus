@@ -1,4 +1,367 @@
-# LoggerPlusPlus
+# LoggerPlusPlus - English documentation
+
+## Introduction
+
+**LoggerPlusPlus** is a Python library designed to enhance and improve the standard `logging` module. The default module has certain limitations in terms of usability and features, such as the lack of log coloring, inconsistent formatting, and limited file size management.
+
+LoggerPlusPlus addresses these shortcomings by providing structured and colored log presentation, centralized management of multiple `loggers`, and advanced functionalities, such as performance tracking and post-execution log analysis.
+
+This library is aimed at professionals looking for an efficient and flexible logging solution, suitable for both simple projects and complex applications requiring multiple loggers managed in a consistent manner. Thanks to its `LoggerManager`, it ensures centralized configuration and an optimized monitoring experience. Its efficiency and numerous features make it particularly useful for developers of complex applications, as well as data scientists and analysts needing detailed process tracking.
+
+## Installation
+
+### Via PyPI with pip
+
+To install the library via the official package manager:
+
+```bash
+pip install loggerplusplus
+```
+
+### Via GitHub
+
+To access the latest development version or contribute to the project:
+
+```bash
+git clone https://github.com/your-username/loggerplusplus.git
+cd loggerplusplus
+pip install .
+```
+
+## Logger
+
+The central component of **LoggerPlusPlus** is the `Logger` object, which manages and displays logs. To use it, start by importing it:
+
+```python
+from loggerplusplus import Logger
+```
+
+The `Logger` configuration relies on a `LoggerConfig` object, which groups several sub-configurations:
+
+- **`LogLevelsConfig`**: Manages the log levels allowed for display, writing, and decorators.
+- **`PlacementConfig`**: Defines the log formatting and structuring (identifier length, display format, etc.).
+- **`MonitorConfig`**: Controls disk space usage for log files.
+
+### Configuration Parameters
+
+Here are the main configurable options for a `Logger`:
+
+- **`identifier` (str)**: Name of the logger, used as the log source (default `"unknown"`).
+- **`colors` (BaseColors)**: Color palette used for logs (e.g., `ClassicColors`).
+- **`path` (str)**: Directory where log files will be stored (default `"logs"`).
+- **`follow_logger_manager_rules` (bool)**: If `True`, applies the rules defined by the `LoggerManager`. (This parameter is extensively detailed in the `LoggerManager` section of the documentation).
+
+#### Log Level Configuration (`LogLevelsConfig`)
+
+- **`decorator_log_level` (LogLevels)**: Log level allowed for decorators (default `DEBUG`).
+- **`print_log_level` (LogLevels)**: Log level allowed for display (default `DEBUG`).
+- **`file_log_level` (LogLevels)**: Log level allowed for file writing (default `DEBUG`).
+- **`print_log` (bool)**: Enables or disables log display in the console.
+- **`write_to_file` (bool)**: Enables or disables log file writing.
+
+#### Display Configuration (`PlacementConfig`)
+
+- **`identifier_max_width` (int)**: Maximum identifier width (truncated if exceeded, `0` for automatic).
+- **`level_max_width` (int)**: Maximum log level width.
+- **`filename_lineno_max_width` (int)**: Maximum width for filename and line number (`15` by default).
+- **`placement_improvement` (bool)**: Dynamically adjusts element widths for better readability.
+
+#### Log File Management (`MonitorConfig`)
+
+- **`display_monitoring` (bool)**: Displays disk space monitoring information.
+- **`files_monitoring` (bool)**: Enables automatic deletion of oversized log files.
+- **`file_size_unit` (str)**: File size unit (`"GB"`, `"MB"`, etc.).
+- **`file_size_precision` (int)**: Number of decimal places for size display.
+- **`disk_alert_threshold_percent` (float)**: Disk saturation alert threshold (e.g., `0.8` for 80%).
+- **`log_files_size_alert_threshold_percent` (float)**: Alert threshold for log file size (e.g., `0.2` for 20%).
+- **`max_log_file_size` (float)**: Maximum allowed log file size before deleting older ones (`1.0 GB` by default).
+
+### Instantiation
+
+The `Logger` offers great flexibility in instantiation. It can be configured in several ways:
+
+- By passing a `LoggerConfig` object directly.
+- By specifying only the keys of the sub-configurations (`LogLevelsConfig`, `PlacementConfig`, `MonitorConfig`).
+- By using a dictionary containing the desired parameters.
+
+#### Instantiation with Explicit Configurations
+
+```python
+from loggerplusplus import Logger, LoggerConfig, LogLevelsConfig, PlacementConfig, MonitorConfig, LogLevels
+from loggerplusplus.colors import ClassicColors
+
+# Define sub-configurations
+log_levels_config = LogLevelsConfig(print_log_level=LogLevels.INFO)
+placement_config = PlacementConfig(identifier_max_width=15)
+monitor_config = MonitorConfig(files_monitoring=True)
+
+# Instantiate logger with a complete configuration
+logger_config = LoggerConfig(
+    identifier="logger_explicit_config",
+    log_levels_config=log_levels_config,
+    placement_config=placement_config,
+    monitor_config=monitor_config,
+    colors=ClassicColors,
+    path="logs",
+    follow_logger_manager_rules=False,
+)
+
+logger = Logger(config=logger_config)  # Logger instantiation
+```
+
+#### Instantiation with Top-Level Parameters
+
+```python
+logger = Logger(
+    identifier="logger_explicit_sub_config",
+    log_levels_config=log_levels_config,
+    placement_config=placement_config,
+    monitor_config=monitor_config,
+    colors=ClassicColors,
+    path="logs",
+    follow_logger_manager_rules=False,
+)
+```
+
+#### Instantiation with Second-Level Parameters
+
+You can also specify parameters directly without using sub-configurations.
+
+```python
+logger = Logger(
+    identifier="logger_implicit",
+    print_log_level=LogLevels.INFO,
+    identifier_max_width=15,
+    files_monitoring=True,
+    colors=ClassicColors,
+    path="logs",
+    follow_logger_manager_rules=False,
+)
+```
+
+> ⚠️ Parameters must be specified during instantiation. Using `Logger(logger_config)` will not work.
+
+#### Instantiation from a Dictionary
+
+```python
+dict_config = {
+    "identifier": "logger_dict",
+    "print_log_level": LogLevels.INFO,
+    "identifier_max_width": 15,
+    "files_monitoring": True,
+    "colors": ClassicColors,
+    "path": "logs",
+    "follow_logger_manager_rules": False,
+}
+
+logger = Logger(**dict_config)
+```
+
+> Any unspecified parameter will take its default value as indicated in the `Configuration Parameters` section.
+
+### Usage
+
+#### Log Levels
+
+LoggerPlusPlus provides various log levels, from the most critical to the least important. These levels are defined in the `LogLevels` enumeration:
+
+```python
+from enum import IntEnum
+import logging
+
+
+class LogLevels(IntEnum):
+    """
+    Enumeration of log levels for clear and explicit use.
+    """
+    FATAL = logging.FATAL  # Highest severity, distinct from CRITICAL
+    CRITICAL = logging.CRITICAL
+    ERROR = logging.ERROR
+    WARNING = logging.WARNING
+    INFO = logging.INFO
+    DEBUG = logging.DEBUG
+    NOTSET = logging.NOTSET
+```
+
+Each log level is associated with a logger method for recording messages:
+
+```python
+from loggerplusplus import Logger
+
+logger = Logger(identifier="logger")
+
+logger.debug("This is a debug message")
+logger.info("This is an informational message")
+logger.warning("This is a warning")
+logger.error("This is an error message")
+logger.critical("This is a critical message")
+logger.fatal("This is a fatal message")
+```
+
+---
+
+#### Manually Defining the Log Level
+
+It is also possible to manually specify the log level using the `log()` method:
+
+```python
+from loggerplusplus import LogLevels
+
+logger.log("This is a debug message", LogLevels.DEBUG)
+logger.log("This is an informational message", LogLevels.INFO)
+logger.log("This is a warning", LogLevels.WARNING)
+logger.log("This is an error message", LogLevels.ERROR)
+logger.log("This is a critical message", LogLevels.CRITICAL)
+logger.log("This is a fatal message", LogLevels.FATAL)
+```
+
+## LoggerManager
+
+In a context where multiple loggers are used, it is often necessary to centralize their configuration and management. This is precisely the role of the `LoggerManager`.
+
+The `LoggerManager` is a global class that does not require instantiation. Its attributes can be modified to affect the behavior of the loggers associated with it.
+
+The `follow_logger_manager_rules` parameter of the `Logger` determines whether a logger should follow the rules defined by the `LoggerManager`. If this parameter is enabled, the logger will automatically inherit the global configurations defined by the `LoggerManager`, without the need to redefine each parameter individually.
+
+However, it is possible to enable `follow_logger_manager_rules` while modifying specific logger parameters. In this case, the `LoggerManager` configurations will be applied except for the explicitly defined parameters at the logger level.
+
+The `LoggerManager` has an attribute `global_config` containing the global configuration for loggers. This attribute can be modified to adjust the global settings of loggers.
+
+#### Additional Options in `LoggerManager`
+
+Some advanced options allow for intelligent modifications to `global_config` based on instantiated loggers and their parameters:
+
+- **`LoggerManager.enable_files_logs_monitoring_only_for_one_logger` (bool)**: Enables log file monitoring for a single logger (the first one with this option enabled).
+- **`LoggerManager.enable_dynamic_config_update` (bool)**: Allows dynamically updating logger configurations based on the `LoggerManager`.
+- **`LoggerManager.enable_unique_logger_identifier` (bool)**: Ensures unique logger identifiers (adds a prefix to avoid duplicates).
+
+### Configuring `LoggerManager`
+
+#### Configuring the Global Configuration (type: `LoggerConfig`)
+
+```python
+from loggerplusplus import LoggerManager, LogLevels, LoggerConfig, logger_colors
+
+LoggerManager.global_config = LoggerConfig.from_kwargs(
+    colors=logger_colors.ClassicColors,
+    path="logs",
+    # LogLevels
+    decorator_log_level=LogLevels.DEBUG,
+    print_log_level=LogLevels.DEBUG,
+    file_log_level=LogLevels.DEBUG,
+    # Loggers Output
+    print_log=True,
+    write_to_file=True,
+    # Monitoring
+    display_monitoring=False,
+    files_monitoring=False,
+    file_size_unit="GB",
+    disk_alert_threshold_percent=0.8,
+    log_files_size_alert_threshold_percent=0.2,
+    max_log_file_size=1.0,
+    # Placement
+    identifier_max_width=15,
+    filename_lineno_max_width=15,
+)
+```
+
+#### Configuring `LoggerManager` Options
+
+```python
+LoggerManager.enable_files_logs_monitoring_only_for_one_logger = True
+LoggerManager.enable_dynamic_config_update = True
+LoggerManager.enable_unique_logger_identifier = True
+```
+
+> ⚠️ Only loggers with `follow_logger_manager_rules` enabled will be affected by the configurations and options defined in the `LoggerManager`.
+
+## Decorators
+
+**LoggerPlusPlus** provides decorators that allow automatic logging of function execution and execution time measurement.
+
+### Logging a Function: **`@log`**
+
+The `@log` decorator automatically logs the execution of a function. It displays the start of the decorated function's execution as well as its input parameters.
+
+#### Parameters
+
+- **`param_logger` (Logger | str | Callable)**: Logger to use for logging.
+    - Can be a string representing the logger's identifier, which will be automatically retrieved from instantiated loggers or created if nonexistent.
+    - Can be an instance of `Logger`.
+    - Can be a lambda function returning a logger, useful for loggers defined as class attributes.
+- **`log_level` (LogLevels)**: Log level to use for logging (default `DEBUG`).
+
+#### Usage Example
+
+Logging via identifier:
+
+```python
+from loggerplusplus import Logger, log
+
+logger = Logger(identifier="logger_decorator_log")
+
+
+@log(param_logger="logger_decorator_log")  # Retrieves the logger via its identifier
+def test1(a, b):
+    return a + b
+
+
+@log(param_logger="another_logger")  # Creates a logger with the identifier "another_logger"
+def test2(a, b):
+    return a + b
+```
+
+Logging via instance:
+
+```python
+logger = Logger(identifier="logger_decorator_log")
+
+
+@log(param_logger=logger)
+def test(a, b):
+    return a + b
+```
+
+Logging via callable for a class logger:
+
+```python
+class MyClass:
+    def __init__(self):
+        self.logger = Logger(identifier="class_logger")
+
+    @log(param_logger=lambda self: self.logger)
+    def process_data(self):
+        import time
+        time.sleep(1)
+```
+
+### Measuring Execution Time: **`@time_tracker`**
+
+The `@time_tracker` decorator automatically measures the execution time of a function. It logs the execution duration of the decorated function.
+
+#### Parameters
+
+- **`param_logger` (Logger | str | Callable)**: Logger to use for logging.
+    - Can be a string representing the logger's identifier, which will be automatically retrieved from instantiated loggers or created if nonexistent.
+    - Can be an instance of `Logger`.
+    - Can be a lambda function returning a logger, useful for loggers defined as class attributes.
+- **`log_level` (LogLevels)**: Log level to use for logging (default `DEBUG`).
+
+Usage is identical to `@log`.
+
+## LogAnalyzer
+
+Coming soon...
+
+### Author
+
+Project created and maintained by **Florian BARRE**.  
+For any questions or contributions, feel free to contact me.  
+[My Website](https://florianbarre.fr/) | [My LinkedIn](www.linkedin.com/in/barre-florian) | [My GitHub](https://github.com/Florian-BARRE)
+---
+
+---
+# LoggerPlusPlus - documentation Française
 
 ## Introduction
 
@@ -18,7 +381,7 @@ d'applications complexes, ainsi qu'aux data scientists et analystes ayant besoin
 
 ## Installation
 
-### Via PyPI
+### Via PyPI avec pip
 
 Pour installer la bibliothèque via le gestionnaire de paquets officiel :
 
