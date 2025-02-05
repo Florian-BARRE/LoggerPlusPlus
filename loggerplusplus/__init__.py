@@ -1,6 +1,6 @@
 # ====== Internal Project Imports ======
 from loggerplusplus.logger_manager import LoggerManager
-from loggerplusplus.logger_configs import LoggerConfig
+from loggerplusplus.logger_configs import LoggerConfig, LogLevelsConfig, PlacementConfig, MonitorConfig
 
 from loggerplusplus.logger import Logger
 from loggerplusplus.log_levels import LogLevels

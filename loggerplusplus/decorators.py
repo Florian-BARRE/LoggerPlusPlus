@@ -14,13 +14,13 @@ from loggerplusplus.tools import get_function_metadata, get_logger_from_decorato
 
 
 # ====== Decorators ======
-def time_tracker(param_logger: Logger | str | Callable = None):
+def time_tracker(param_logger: Logger | str | Callable = None, log_level: LogLevels = LogLevels.DEBUG):
     """
     Decorator to measure and log the execution time of a function/method.
 
     Args:
         param_logger (Logger | str | Callable, optional): Logger instance, identifier, or callable returning a logger.
-
+        log_level (LogLevels, optional): Logging level. Defaults to LogLevels.DEBUG.
     Returns:
         Callable: The wrapped function.
     """
@@ -38,7 +38,7 @@ def time_tracker(param_logger: Logger | str | Callable = None):
             finally:
                 elapsed_time = time.perf_counter() - start_time
                 log_message = f"{get_function_metadata(func, args, kwargs)} executed in {elapsed_time:.6f}s"
-                logger_instance.debug(log_message)
+                logger_instance.log(msg=log_message, level=log_level)
 
         return wrapper
 
