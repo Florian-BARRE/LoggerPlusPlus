@@ -80,7 +80,9 @@ class LogAnalyser:
             plt.figure(figsize=(10, 6))
 
             for func_name, time_list in times.items():
-                time_list = [float(time) * 1000 for time in time_list]  # Convert seconds to milliseconds
+                time_list = [
+                    float(time) * 1000 for time in time_list
+                ]  # Convert seconds to milliseconds
                 average_time = sum(time_list) / len(time_list)
                 plt.plot(
                     time_list,
@@ -100,3 +102,58 @@ class LogAnalyser:
             print(f"Error: The file '{self.log_file_path}' was not found.")
         except Exception as e:
             print(f"An error occurred: {e}")
+
+    def analyse_func_occurences(
+        self, occurrence_threshold: int = 1, nb_func: int = -1, top_occ: bool = True
+    ):
+        """
+        Analyzes the number of occurrences of each function in the log file and generates a bar plot.
+
+        Args:
+            occurrence_threshold (int, optional): Minimum number of occurrences for a function to be included in the analysis. Defaults to 1.
+            nb_func (int, optional): Number of top functions to display based on occurrences. Defaults to -1 (display all).
+            top_occ (bool, optional): If True, display functions with the highest occurrences first. If False, display functions with the lowest occurrences first. Defaults to True.
+        """
+        # Regular expression pattern to capture function names
+        pattern = (
+            r"\[\S+\] "  # Match any section enclosed in brackets, e.g., [INFO]
+            r"([\w\.]+)"  # Capture function name, allowing for dots in names
+        )
+
+        func_occurrences = {}
+
+        with open(self.log_file_path, "r") as log_file:
+            log_lines = log_file.readlines()
+            for lines in log_lines:
+                match = re.search(pattern, lines)
+                if match:
+                    function_name = match.group(1)
+                    if function_name not in func_occurrences:
+                        func_occurrences[function_name] = 1
+                    else:
+                        func_occurrences[function_name] += 1
+
+            func_occurrences_list = [
+                (func_name, count)
+                for func_name, count in func_occurrences.items()
+                if count >= occurrence_threshold
+            ]
+
+            if nb_func != -1:
+                func_occurrences_list = sorted(
+                    func_occurrences_list, key=lambda x: x[1], reverse=top_occ
+                )[:nb_func]
+
+            if not func_occurrences_list:
+                print("No functions found with the specified occurrence threshold.")
+
+            else:
+                func_names, counts = zip(*func_occurrences_list)
+                plt.figure(figsize=(12, 8))
+                plt.bar(func_names, counts, color="skyblue")
+                plt.xlabel("Function Names")
+                plt.ylabel("Occurrences")
+                plt.title("Function Occurrences in Log File")
+                plt.xticks(rotation=45, ha="right")
+                plt.tight_layout()
+                plt.show()
