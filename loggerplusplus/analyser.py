@@ -34,6 +34,8 @@ class LogAnalyser:
         self,
         func_names: str | list[str] | None = None,
         identifier: str | list[str] | None = None,
+        min_execution_time_ms: float = 0.0,
+        max_execution_time_ms: float = np.inf,
     ):
         """
         Analyzes execution times for specified functions and generates a plot.
@@ -68,10 +70,15 @@ class LogAnalyser:
                 if identifier is None or match.group(1) in identifier:
                     function_name, execution_time = match.group(2), match.group(3)
                     if any(re.fullmatch(fn, function_name) for fn in func_names):
-                        if function_name not in times:
-                            times[function_name] = [execution_time]
-                        else:
-                            times[function_name].append(execution_time)
+                        if (
+                            min_execution_time_ms
+                            <= float(execution_time) * 1000
+                            <= max_execution_time_ms
+                        ):
+                            if function_name not in times:
+                                times[function_name] = [float(execution_time)]
+                            else:
+                                times[function_name].append(float(execution_time))
 
         if not times:
             print("No matching execution times found in the log file.")
@@ -82,7 +89,7 @@ class LogAnalyser:
 
         for func_name, time_list in times.items():
             time_list = [
-                float(time) * 1000 for time in time_list
+                time * 1000 for time in time_list
             ]  # Convert seconds to milliseconds
             average_time = sum(time_list) / len(time_list)
             plt.plot(
