@@ -36,6 +36,9 @@ class LogAnalyser:
         identifier: str | list[str] | None = None,
         min_execution_time_ms: float = 0.0,
         max_execution_time_ms: float = np.inf,
+        sort_by_avg_time: bool = True,
+        nb_max_funcs: int = np.iinfo(np.int32).max,
+        order_by_max_execution_time: bool = True,
     ):
         """
         Analyzes execution times for specified functions and generates a plot.
@@ -87,14 +90,25 @@ class LogAnalyser:
         # Plot the execution times
         plt.figure(figsize=(10, 6))
 
-        for func_name, time_list in times.items():
-            time_list = [
-                time * 1000 for time in time_list
-            ]  # Convert seconds to milliseconds
-            average_time = sum(time_list) / len(time_list)
+        times_ms = list(map(lambda x: [t * 1000 for t in x], times.values()))
+        average_times = [sum(t) / len(t) for t in times_ms]
+        func_names = list(times.keys())
+
+        # Sort by average_times while preserving index pairing
+        if sort_by_avg_time:
+            sorted_indices = sorted(
+                range(len(average_times)),
+                key=lambda i: average_times[i],
+                reverse=order_by_max_execution_time,
+            )[:nb_max_funcs]
+            func_names = [func_names[i] for i in sorted_indices]
+            times_ms = [times_ms[i] for i in sorted_indices]
+            average_times = [average_times[i] for i in sorted_indices]
+
+        for i in range(len(func_names)):
             plt.plot(
-                time_list,
-                label=f"{func_name} (Avg: {average_time:.6f} ms)",
+                times_ms[i],
+                label=f"{func_names[i]} (Avg: {average_times[i]:.6f} ms)",
                 marker="o",
             )
 
