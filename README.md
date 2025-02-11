@@ -349,6 +349,23 @@ The `@time_tracker` decorator automatically measures the execution time of a fun
 
 Usage is identical to `@log`.
 
+Decorators combination is supported.
+
+```python
+class MyClass:
+    def __init__(self):
+        self.logger = Logger(identifier="class_logger")
+
+
+    @track_time(param_logger=lambda self: self.logger)
+    @log(param_logger=lambda self: self.logger)
+    def process_data(self):
+        import time
+        time.sleep(1)
+```
+
+
+
 
 ## LogAnalyser
 
@@ -914,6 +931,21 @@ d'exécution de la fonction décorée.
 - **`log_level` (LogLevels)** : Niveau de log à utiliser pour la journalisation (par défaut `DEBUG`).
 
 L'utilisation est identique à `@log`.
+
+La combination des décorateurs est prise en charge.
+
+```python
+class MyClass:
+    def __init__(self):
+        self.logger = Logger(identifier="class_logger")
+
+
+    @track_time(param_logger=lambda self: self.logger)
+    @log(param_logger=lambda self: self.logger)
+    def process_data(self):
+        import time
+        time.sleep(1)
+```
 
 
 ## LogAnalyser

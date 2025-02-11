@@ -124,7 +124,7 @@ class LogAnalyser:
         # Configure plot labels and title
         plt.xlabel("Execution Count")
         plt.ylabel("Time (ms)")
-        plt.title("Function Execution Times")
+        plt.title(f"Function Execution Times in {self.log_file_path}")
         plt.legend()
         plt.grid(True)
         plt.show()
@@ -204,7 +204,7 @@ class LogAnalyser:
                 plt.bar(func_names, counts, color="skyblue")
                 plt.xlabel("Function Names")
                 plt.ylabel("Occurrences")
-                plt.title("Function Occurrences in Log File")
+                plt.title(f"Function Occurrences in {self.log_file_path}")
                 plt.xticks(rotation=45, ha="right")
                 plt.tight_layout()
                 plt.show()
