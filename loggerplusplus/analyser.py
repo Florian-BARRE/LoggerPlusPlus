@@ -10,6 +10,7 @@ import re
 
 # Third-party library imports
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class LogAnalyser:
@@ -29,7 +30,11 @@ class LogAnalyser:
         """
         self.log_file_path = log_file_path
 
-    def analyse_time_tracker(self, func_names: str | list[str] | None = None):
+    def analyse_time_tracker(
+        self,
+        func_names: str | list[str] | None = None,
+        identifier: str | list[str] | None = None,
+    ):
         """
         Analyzes execution times for specified functions and generates a plot.
 
@@ -44,67 +49,62 @@ class LogAnalyser:
         elif func_names is None:
             func_names = [".*"]  # Match all functions
 
+        if isinstance(identifier, str):
+            identifier = [identifier]
+
         # Regular expression pattern to capture function execution times
-        pattern = (
-            r"\[\S+\] "  # Match any section enclosed in brackets, e.g., [INFO]
-            r"([\w\.]+)"  # Capture function name, allowing for dots in names
-            r"\(.*?\)"  # Capture potential arguments without being greedy
-            r" executed in "  # Fixed phrase
-            r"(\d+\.\d+)"  # Capture execution time in decimal format
-            r"s"
-        )
+        pattern = r"\[\s*([^\s\]]+)\s*\]\s+\[[\w.]+:[\d]+\]\s+\w+\s+\|\s+\[[\w.]+\]\s+(\w+)\(\)\s+executed\s+in\s+([\d.]+)s"
 
         times = {}
 
-        try:
-            # Open and read the log file
-            with open(self.log_file_path, "r") as log_file:
-                log_lines = log_file.readlines()
+        # Open and read the log file
+        with open(self.log_file_path, "r") as log_file:
+            log_lines = log_file.readlines()
 
-            # Extract execution times for each matching function
-            for line in log_lines:
-                match = re.search(pattern, line)
-                if match:
-                    function_name, execution_time = match.group(1), match.group(2)
+        # Extract execution times for each matching function
+        for line in log_lines:
+            match = re.search(pattern, line)
+            if match:
+                if identifier is None or match.group(1) in identifier:
+                    function_name, execution_time = match.group(2), match.group(3)
                     if any(re.fullmatch(fn, function_name) for fn in func_names):
                         if function_name not in times:
                             times[function_name] = [execution_time]
                         else:
                             times[function_name].append(execution_time)
 
-            if not times:
-                print("No matching execution times found in the log file.")
-                return
+        if not times:
+            print("No matching execution times found in the log file.")
+            return
 
-            # Plot the execution times
-            plt.figure(figsize=(10, 6))
+        # Plot the execution times
+        plt.figure(figsize=(10, 6))
 
-            for func_name, time_list in times.items():
-                time_list = [
-                    float(time) * 1000 for time in time_list
-                ]  # Convert seconds to milliseconds
-                average_time = sum(time_list) / len(time_list)
-                plt.plot(
-                    time_list,
-                    label=f"{func_name} (Avg: {average_time:.6f} ms)",
-                    marker="o",
-                )
+        for func_name, time_list in times.items():
+            time_list = [
+                float(time) * 1000 for time in time_list
+            ]  # Convert seconds to milliseconds
+            average_time = sum(time_list) / len(time_list)
+            plt.plot(
+                time_list,
+                label=f"{func_name} (Avg: {average_time:.6f} ms)",
+                marker="o",
+            )
 
-            # Configure plot labels and title
-            plt.xlabel("Execution Count")
-            plt.ylabel("Time (ms)")
-            plt.title("Function Execution Times")
-            plt.legend()
-            plt.grid(True)
-            plt.show()
-
-        except FileNotFoundError:
-            print(f"Error: The file '{self.log_file_path}' was not found.")
-        except Exception as e:
-            print(f"An error occurred: {e}")
+        # Configure plot labels and title
+        plt.xlabel("Execution Count")
+        plt.ylabel("Time (ms)")
+        plt.title("Function Execution Times")
+        plt.legend()
+        plt.grid(True)
+        plt.show()
 
     def analyse_func_occurences(
-        self, occurrence_threshold: int = 1, nb_func: int = -1, top_occ: bool = True
+        self,
+        occurrence_threshold: int = 1,
+        nb_func: int = -1,
+        top_occ: bool = True,
+        identifier: str | list[str] | None = None,
     ):
         """
         Analyzes the number of occurrences of each function in the log file and generates a bar plot.
@@ -114,24 +114,39 @@ class LogAnalyser:
             nb_func (int, optional): Number of top functions to display based on occurrences. Defaults to -1 (display all).
             top_occ (bool, optional): If True, display functions with the highest occurrences first. If False, display functions with the lowest occurrences first. Defaults to True.
         """
-        # Regular expression pattern to capture function names
-        pattern = (
-            r"\[\S+\] "  # Match any section enclosed in brackets, e.g., [INFO]
-            r"([\w\.]+)"  # Capture function name, allowing for dots in names
-        )
+
+        if isinstance(identifier, str):
+            identifier = [identifier]
+
+        # Regular expression patterns to capture function names for both cases
+        patterns = [
+            r"\[\s*([^\s\]]+)\s*\]\s+\[[\w.]+:[\d]+\]\s+\w+\s+\|\s+\[([^\]]+)\]\s+(\w+)\(\)\s+called",
+            r"\[\s*([^\s\]]+)\s*\]\s+\[[\w.]+:[\d]+\]\s+\w+\s+\|\s+\[([^\]]+)\]\s+(\w+)\(\)\s+executed\s+in\s+[\d.]+s",
+        ]
 
         func_occurrences = {}
 
         with open(self.log_file_path, "r") as log_file:
             log_lines = log_file.readlines()
-            for lines in log_lines:
-                match = re.search(pattern, lines)
-                if match:
-                    function_name = match.group(1)
-                    if function_name not in func_occurrences:
-                        func_occurrences[function_name] = 1
-                    else:
-                        func_occurrences[function_name] += 1
+            for line in log_lines:
+                for pattern in patterns:
+                    match = re.search(pattern, line)
+                    if match:
+                        match_identifier = match.group(1)
+                        module_name = match.group(2).strip()
+                        function_name = match.group(3)
+                        full_name = f"{module_name}.{function_name}"
+
+                        if identifier is None or match_identifier in identifier:
+                            if full_name not in func_occurrences:
+                                func_occurrences[full_name] = 1
+                            else:
+                                func_occurrences[full_name] += 1
+                        break
+
+            if not func_occurrences:
+                print("No matching functions found in the log file.")
+                return
 
             func_occurrences_list = [
                 (func_name, count)
