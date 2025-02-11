@@ -36,18 +36,27 @@ class LogAnalyser:
         identifier: str | list[str] | None = None,
         min_execution_time_ms: float = 0.0,
         max_execution_time_ms: float = np.inf,
-        sort_by_avg_time: bool = True,
+        is_sort_by_avg_time: bool = True,
         nb_max_funcs: int = np.iinfo(np.int32).max,
-        order_by_max_execution_time: bool = True,
+        is_sort_order_descending: bool = True,
     ):
         """
         Analyzes execution times for specified functions and generates a plot.
 
         Args:
             func_names (str | list[str] | None, optional): Function name(s) to filter.
-                - If a string is provided, only that function is analyzed.
-                - If a list of strings is provided, only those functions are analyzed.
-                - If None, all functions are analyzed.
+            - If a string is provided, only that function is analyzed.
+            - If a list of strings is provided, only those functions are analyzed.
+            - If None, all functions are analyzed.
+            identifier (str | list[str] | None, optional): Identifier(s) to filter log entries.
+            - If a string is provided, only log entries with that identifier are analyzed.
+            - If a list of strings is provided, only log entries with those identifiers are analyzed.
+            - If None, all log entries are analyzed.
+            min_execution_time_ms (float, optional): Minimum execution time in milliseconds to include in the analysis. Defaults to 0.0.
+            max_execution_time_ms (float, optional): Maximum execution time in milliseconds to include in the analysis. Defaults to np.inf.
+            sort_by_avg_time (bool, optional): If True, sort functions by average execution time. Defaults to True.
+            nb_max_funcs (int, optional): Maximum number of functions to display in the plot, ignored if sort_by_avg_time is False. Defaults to np.iinfo(np.int32).max.
+            order_by_max_execution_time (bool, optional): If True, order functions by maximum execution time, ignored if sort_by_avg_time is False. Defaults to True.
         """
         if isinstance(func_names, str):
             func_names = [func_names]
@@ -95,11 +104,11 @@ class LogAnalyser:
         func_names = list(times.keys())
 
         # Sort by average_times while preserving index pairing
-        if sort_by_avg_time:
+        if is_sort_by_avg_time:
             sorted_indices = sorted(
                 range(len(average_times)),
                 key=lambda i: average_times[i],
-                reverse=order_by_max_execution_time,
+                reverse=is_sort_order_descending,
             )[:nb_max_funcs]
             func_names = [func_names[i] for i in sorted_indices]
             times_ms = [times_ms[i] for i in sorted_indices]
@@ -134,6 +143,10 @@ class LogAnalyser:
             occurrence_threshold (int, optional): Minimum number of occurrences for a function to be included in the analysis. Defaults to 1.
             nb_func (int, optional): Number of top functions to display based on occurrences. Defaults to -1 (display all).
             top_occ (bool, optional): If True, display functions with the highest occurrences first. If False, display functions with the lowest occurrences first. Defaults to True.
+            identifier (str | list[str] | None, optional): Identifier(s) to filter log entries.
+            - If a string is provided, only log entries with that identifier are analyzed.
+            - If a list of strings is provided, only log entries with those identifiers are analyzed.
+            - If None, all log entries are analyzed.
         """
 
         if isinstance(identifier, str):
@@ -158,7 +171,9 @@ class LogAnalyser:
                         function_name = match.group(3)
                         full_name = f"{module_name}.{function_name}"
 
-                        if identifier is None or match_identifier in identifier:
+                        if module_name != "decorators" and (
+                            identifier is None or match_identifier in identifier
+                        ):
                             if full_name not in func_occurrences:
                                 func_occurrences[full_name] = 1
                             else:
