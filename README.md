@@ -394,11 +394,11 @@ This method analyzes the execution times of specified functions and generates a 
 analyser.analyse_time_tracker(
     func_names=None,                     # Function name(s) to analyze
     identifier=None,                     # Log identifier(s) to filter
-    min_execution_time_ms=0.0,          # Minimum execution time to include
+    min_execution_time_ms=0.0,           # Minimum execution time to include
     max_execution_time_ms=float('inf'),  # Maximum execution time to include
-    is_sort_by_avg_time=True,              # Sort functions by average time
-    nb_max_funcs=float('inf'),          # Maximum number of functions to display
-    is_sort_order_descending=True     # Order by maximum execution time
+    is_sort_by_avg_time=True,            # Sort functions by average time
+    nb_max_funcs=float('inf'),           # Maximum number of functions to display
+    is_sort_order_descending=True        # Order by maximum execution time
 )
 ```
 
@@ -442,7 +442,7 @@ This method analyzes the number of occurrences of each function in the log file 
 
 ```python
 analyser.analyse_func_occurences(
-    occurrence_threshold=1,    # Minimum number of occurrences to include
+    occurrence_threshold=1,   # Minimum number of occurrences to include
     nb_func=10,               # Number of functions to display
     top_occ=True,             # Display highest occurrences first
     identifier=None           # Log identifier(s) to filter
@@ -973,13 +973,13 @@ Cette méthode analyse les temps d'exécution des fonctions spécifiées et gén
 
 ```python
 analyser.analyse_time_tracker(
-    func_names=None,                     # Nom(s) de fonction à analyser
-    identifier=None,                     # Identifiant(s) de log à filtrer
+    func_names=None,                    # Nom(s) de fonction à analyser
+    identifier=None,                    # Identifiant(s) de log à filtrer
     min_execution_time_ms=0.0,          # Temps d'exécution minimum à inclure
-    max_execution_time_ms=float('inf'),  # Temps d'exécution maximum à inclure
-    is_sort_by_avg_time=True,              # Trier les fonctions par temps moyen
+    max_execution_time_ms=float('inf'), # Temps d'exécution maximum à inclure
+    is_sort_by_avg_time=True,           # Trier les fonctions par temps moyen
     nb_max_funcs=float('inf'),          # Nombre maximal de fonctions à afficher
-    is_sort_order_descending=True     # Trier par temps d'exécution maximal
+    is_sort_order_descending=True       # Trier par temps d'exécution maximal
 )
 
 ```
@@ -1016,7 +1016,6 @@ analyser.analyse_time_tracker(
     func_names=["process_data", "calculate_metrics"],
     identifier=["worker1", "worker2"],
 )
-
 ```
 
 #### analyse_func_occurences
@@ -1030,11 +1029,9 @@ analyser.analyse_func_occurences(
     top_occ=True,             # Afficher les occurrences les plus élevées en premier
     identifier=None           # Identifiant(s) de log à filtrer
 )
-
 ```
 
 Paramètres :
-
 -   `occurrence_threshold` (int) : Nombre minimum d'occurrences d'une fonction à inclure
 -   `nb_func` (int) : Nombre de fonctions à afficher (-1 pour toutes)
 -   `top_occ` (bool) : Si True, affiche les fonctions avec le plus d'occurrences en premier
@@ -1057,7 +1054,6 @@ analyser.analyse_func_occurences(
     identifier=["worker1", "worker2"],
     occurrence_threshold=3
 )
-
 ```
 
 ### Sortie visuelle
@@ -1098,7 +1094,6 @@ def test2():
 analyser = LogAnalyser("logs/performance_logger.log")
 analyser.analyse_time_tracker()
 analyser.analyse_func_occurences()
-
 ```
 
 ### Bonnes pratiques
