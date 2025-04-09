@@ -215,6 +215,25 @@ logger.log("This is a critical message", LogLevels.CRITICAL)
 logger.log("This is a fatal message", LogLevels.FATAL)
 ```
 
+#### Log to a Specific File
+
+The Logger++ allows for redirecting log messages to a specific file instead of the standard logging destination. This feature gives you the ability to isolate certain log messages in dedicated files to facilitate monitoring and analysis.
+To record a message in a specific file, use the specific_file_name parameter with any log method:
+````python
+# Redirect to a "debug.log" file
+logger.debug("Initializing component xyz", specific_file_name="debug")
+
+# Redirect to an "errors.log" file
+logger.error("Database connection failed", specific_file_name="errors")
+
+# Using the generic method
+logger.log("System event detected", LogLevels.INFO, specific_file_name="system")
+````
+
+Specific log files are created in the same directory as the main log file
+The message format follows the general logger configuration
+RéessayerClaude n'a pas encore la capacité d'exécuter le code qu'il génère.Claude peut faire des erreurs. Assurez-vous de vérifier ses réponses.
+
 ## LoggerManager
 
 In a context where multiple loggers are used, it is often necessary to centralize their configuration and management. This is precisely the role of the `LoggerManager`.
@@ -778,6 +797,25 @@ logger.log("Ceci est un message d'erreur", LogLevels.ERROR)
 logger.log("Ceci est un message critique", LogLevels.CRITICAL)
 logger.log("Ceci est un message fatal", LogLevels.FATAL)
 ```
+#### Log dans un fichier spécifique
+
+Le Logger++ permet de rediriger les messages de log vers un fichier spécifique à la place de la journalisation standard. Cette fonctionnalité vous offre la possibilité d'isoler certains messages de log dans des fichiers dédiés pour faciliter le suivi et l'analyse.
+
+Pour enregistrer un message dans un fichier spécifique, utilisez le paramètre specific_file_name avec n'importe quelle méthode de log :
+
+
+````python
+# Redirection vers un fichier "debug.log"
+logger.debug("Initialisation du composant xyz", specific_file_name="debug")
+
+# Redirection vers un fichier "errors.log" 
+logger.error("Échec de connexion à la base de données", specific_file_name="errors")
+
+# Utilisation avec la méthode générique
+logger.log("Événement système détecté", LogLevels.INFO, specific_file_name="system")
+````
+- Les fichiers spécifiques sont créés dans le même répertoire que le fichier de log principal
+- Le format des messages respecte la configuration générale du logger
 
 ## LoggerManager
 
