@@ -230,9 +230,8 @@ logger.error("Database connection failed", specific_file_name="errors")
 logger.log("System event detected", LogLevels.INFO, specific_file_name="system")
 ````
 
-Specific log files are created in the same directory as the main log file
-The message format follows the general logger configuration
-RéessayerClaude n'a pas encore la capacité d'exécuter le code qu'il génère.Claude peut faire des erreurs. Assurez-vous de vérifier ses réponses.
+- Specific log files are created in the same directory as the main log file
+- The message format follows the general logger configuration
 
 ## LoggerManager
 
