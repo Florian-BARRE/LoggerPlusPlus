@@ -8,11 +8,11 @@
 # excessive logs to prevent overflow, displays the remaining disk space, and offers
 # various practical features for efficient log management.
 
-
 # ====== Imports ======
 # Standard library imports
 from typing import Optional
 import logging
+import os.path
 import sys
 
 # Third-party library imports
@@ -183,7 +183,7 @@ class Logger:
             )
 
     def _set_handler(
-        self, handler: logging.Handler, level: int, colors: Optional[type[BaseColors]]
+            self, handler: logging.Handler, level: int, colors: Optional[type[BaseColors]]
     ):
         """
         Configures a given handler with a formatter and logging level.
@@ -205,7 +205,7 @@ class Logger:
         self.logger.addHandler(handler)
 
     def _get_or_create_specific_file_handler(
-        self, specific_file_name: str
+            self, specific_file_name: str
     ) -> logging.FileHandler:
         """
         Gets or creates a FileHandler for a specific log file.
@@ -220,7 +220,7 @@ class Logger:
             logging.FileHandler: The file handler for the specific log file
         """
         # Create a full path for the specific log file
-        specific_file_path = f"{self.config.path}/{specific_file_name}.log"
+        specific_file_path = os.path.join(self.config.path, f"{specific_file_name}.log")
 
         if specific_file_name in self._specific_handlers:
             return self._specific_handlers[specific_file_name]
@@ -247,14 +247,14 @@ class Logger:
 
     # ====== Formatter Methods ======
     def update_handler_formatter(
-        self,
-        handler_type: type[logging.FileHandler] | type[logging.StreamHandler],
-        identifier: Optional[str] = None,
-        identifier_max_width: Optional[int] = None,
-        filename_lineno_max_width: Optional[int] = None,
-        level_max_width: Optional[int] = None,
-        colors: Optional[type[BaseColors]] = None,
-        **kwargs,
+            self,
+            handler_type: type[logging.FileHandler] | type[logging.StreamHandler],
+            identifier: Optional[str] = None,
+            identifier_max_width: Optional[int] = None,
+            filename_lineno_max_width: Optional[int] = None,
+            level_max_width: Optional[int] = None,
+            colors: Optional[type[BaseColors]] = None,
+            **kwargs,
     ):
         """
         Updates the formatter of a specified handler type dynamically.
@@ -275,14 +275,14 @@ class Logger:
         """
         self.config.identifier = identifier or self.config.identifier
         self.config.placement_config.placement_improvement = (
-            identifier_max_width or self.config.placement_config.placement_improvement
+                identifier_max_width or self.config.placement_config.placement_improvement
         )
         self.config.placement_config.filename_lineno_max_width = (
-            filename_lineno_max_width
-            or self.config.placement_config.filename_lineno_max_width
+                filename_lineno_max_width
+                or self.config.placement_config.filename_lineno_max_width
         )
         self.config.placement_config.level_max_width = (
-            level_max_width or self.config.placement_config.level_max_width
+                level_max_width or self.config.placement_config.level_max_width
         )
 
         if hasattr(self, "logger"):
@@ -304,13 +304,13 @@ class Logger:
                     break  # Exit loop after updating the first matching handler
 
     def update_print_handler_formatter(
-        self,
-        identifier: Optional[str] = None,
-        identifier_max_width: Optional[int] = None,
-        filename_lineno_max_width: Optional[int] = None,
-        level_max_width: Optional[int] = None,
-        colors: Optional[type[BaseColors]] = None,
-        **kwargs,
+            self,
+            identifier: Optional[str] = None,
+            identifier_max_width: Optional[int] = None,
+            filename_lineno_max_width: Optional[int] = None,
+            level_max_width: Optional[int] = None,
+            colors: Optional[type[BaseColors]] = None,
+            **kwargs,
     ):
         """
         Updates the formatter of the StreamHandler (console logging).
@@ -332,12 +332,12 @@ class Logger:
         )
 
     def update_file_handler_formatter(
-        self,
-        identifier: Optional[str] = None,
-        identifier_max_width: Optional[int] = None,
-        filename_lineno_max_width: Optional[int] = None,
-        level_max_width: Optional[int] = None,
-        **kwargs,
+            self,
+            identifier: Optional[str] = None,
+            identifier_max_width: Optional[int] = None,
+            filename_lineno_max_width: Optional[int] = None,
+            level_max_width: Optional[int] = None,
+            **kwargs,
     ):
         """
         Updates the formatter of the FileHandler (file logging).
@@ -358,10 +358,10 @@ class Logger:
 
     # ====== Logging Methods ======
     def log(
-        self,
-        msg: str,
-        level: LogLevels,
-        specific_file_name: Optional[str] = None,
+            self,
+            msg: str,
+            level: LogLevels,
+            specific_file_name: Optional[str] = None,
     ) -> None:
         """
         Logs a message at the specified log level. Optionally logs to a specific file.
@@ -392,9 +392,9 @@ class Logger:
             log_func(msg, stacklevel=2)
 
     def fatal(
-        self,
-        msg: str,
-        specific_file_name: Optional[str] = None,
+            self,
+            msg: str,
+            specific_file_name: Optional[str] = None,
     ) -> None:
         """
         Logs a fatal message. Optionally logs to a specific file.
@@ -413,9 +413,9 @@ class Logger:
             self.logger.fatal(msg, stacklevel=3)
 
     def critical(
-        self,
-        msg: str,
-        specific_file_name: Optional[str] = None,
+            self,
+            msg: str,
+            specific_file_name: Optional[str] = None,
     ) -> None:
         """
         Logs a critical message. Optionally logs to a specific file.
@@ -434,9 +434,9 @@ class Logger:
             self.logger.critical(msg, stacklevel=2)
 
     def error(
-        self,
-        msg: str,
-        specific_file_name: Optional[str] = None,
+            self,
+            msg: str,
+            specific_file_name: Optional[str] = None,
     ) -> None:
         """
         Logs an error message. Optionally logs to a specific file.
@@ -455,9 +455,9 @@ class Logger:
             self.logger.error(msg, stacklevel=2)
 
     def warning(
-        self,
-        msg: str,
-        specific_file_name: Optional[str] = None,
+            self,
+            msg: str,
+            specific_file_name: Optional[str] = None,
     ) -> None:
         """
         Logs a warning message. Optionally logs to a specific file.
@@ -476,9 +476,9 @@ class Logger:
             self.logger.warning(msg, stacklevel=2)
 
     def info(
-        self,
-        msg: str,
-        specific_file_name: Optional[str] = None,
+            self,
+            msg: str,
+            specific_file_name: Optional[str] = None,
     ) -> None:
         """
         Logs an informational message. Optionally logs to a specific file.
@@ -497,9 +497,9 @@ class Logger:
             self.logger.info(msg, stacklevel=2)
 
     def debug(
-        self,
-        msg: str,
-        specific_file_name: Optional[str] = None,
+            self,
+            msg: str,
+            specific_file_name: Optional[str] = None,
     ) -> None:
         """
         Logs a debug message. Optionally logs to a specific file.
