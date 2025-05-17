@@ -16,6 +16,9 @@ from loggerplusplus.colors import (
     CyberpunkColors,
 )
 
+# ====== Logger Class Imports ======
+from loggerplusplus.logger_class import LoggerClass
+
 # ====== Decorator Imports ======
 from loggerplusplus.decorators import time_tracker, log
 

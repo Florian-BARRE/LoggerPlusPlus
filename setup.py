@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="loggerplusplus",
-    version="0.1.6",
+    version="0.1.7",
     author="Florian BARRE",
     author_email="florian.barre78@gmail.com",
     description="LoggerPlusPlus is an enhanced Python logging module with colorized output, "
@@ -16,7 +16,7 @@ setup(
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
     ],
-    python_requires=">=3.12",
+    python_requires=">=3.9",
     install_requires=[
         "colorama>=0.4.6",
         "contourpy>=1.3.1",
