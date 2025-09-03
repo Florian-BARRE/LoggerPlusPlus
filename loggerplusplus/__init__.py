@@ -1,26 +1,19 @@
-# ====== Internal Project Imports ======
-from loggerplusplus.logger_manager import LoggerManager
-from loggerplusplus.logger_configs import LoggerConfig, LogLevelsConfig, PlacementConfig, MonitorConfig
+"""
+Top-level public API surface.
+Keep it small, obvious, and stable.
+"""
 
-from loggerplusplus.logger import Logger
-from loggerplusplus.log_levels import LogLevels
-from loggerplusplus.formatter import Formatter
+from .factory import LoggerPlusPlus
+from .logger.manager import LoggerManager
+from .config import LoggerConfig, FormatConfig, SeparatorConfig, LevelConfig, OutputConfig, FileConfig
 
-# ====== Color Theme Imports ======
-import loggerplusplus.colors as logger_colors
-from loggerplusplus.colors import (
-    ClassicColors,
-    DarkModeColors,
-    NeonColors,
-    PastelColors,
-    CyberpunkColors,
-)
 
-# ====== Logger Class Imports ======
-from loggerplusplus.logger_class import LoggerClass
+from .loglevel import install_fatal_level
 
-# ====== Decorator Imports ======
-from loggerplusplus.decorators import time_tracker, log
+install_fatal_level()
 
-# ====== Logger Analyser ======
-from loggerplusplus.analyser import LogAnalyser
+__all__ = [
+    "LoggerPlusPlus",
+    "LoggerManager",
+    "LoggerConfig",
+]
