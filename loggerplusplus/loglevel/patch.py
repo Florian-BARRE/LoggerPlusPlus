@@ -1,61 +1,48 @@
-# ====== Code Summary ======
-# This module extends Python's standard logging system by introducing a custom
-# `FATAL` log level and installing it into the `logging` module.
-# It ensures the level is added only once and provides a `.fatal()` method for loggers.
-
-from __future__ import annotations
-
-# ====== Standard Library Imports ======
 import logging
-
-# ====== Internal Project Imports ======
 from .log_level import LogLevels
 
-# Tracks whether the fatal log level has already been installed
-_installed: bool = False
+
+def _bump(sl, add, default):
+    if sl is None:
+        return default
+    try:
+        return int(sl) + add
+    except Exception:
+        return default
+
+
+def _logger_fatal(self: logging.Logger, msg, *args, **kwargs):
+    """
+    Instance method: logger.fatal(...)
+    Call chain: user -> Logger.fatal(wrapper) -> _LPPLogger._log -> logging
+    We must skip both our wrapper and _LPPLogger._log.
+    """
+    sl = kwargs.pop("stacklevel", None)
+    eff = _bump(sl, add=2, default=3)  # default 3, or +2 if user gave one
+    # Use self._log to keep your LPP features (duplication, etc.)
+    self._log(LogLevels.FATAL, msg, args, stacklevel=eff, **kwargs)
+
+
+def _root_fatal(msg, *args, **kwargs):
+    """
+    Module-level: logging.fatal(...)
+    Call chain: user -> _root_fatal(wrapper) -> logging.root.log -> logging
+    We must skip our wrapper only (logging.* is auto-skipped).
+    """
+    if len(logging.root.handlers) == 0:
+        logging.basicConfig()
+    sl = kwargs.pop("stacklevel", None)
+    eff = _bump(sl, add=1, default=2)  # default 2, or +1 if user gave one
+    logging.root.log(LogLevels.FATAL, msg, *args, stacklevel=eff, **kwargs)
 
 
 def install_fatal_level() -> None:
-    """
-    Install the custom FATAL log level into Python's logging module.
+    # register level name/number
+    if logging.getLevelName(int(LogLevels.FATAL)) != "FATAL":
+        logging.addLevelName(int(LogLevels.FATAL), "FATAL")
+    if not hasattr(logging, "FATAL"):
+        logging.FATAL = int(LogLevels.FATAL)
 
-    Behavior:
-        - Adds a FATAL level constant and associates it with the name "FATAL".
-        - Adds a `Logger.fatal()` method if it does not already exist.
-        - Ensures installation is performed only once.
-
-    Returns:
-        None
-    """
-    global _installed
-
-    # 1. Prevent duplicate installation
-    if _installed:
-        return
-
-    # 2. Register FATAL level name with logging
-    logging.addLevelName(LogLevels.FATAL, "FATAL")
-
-    # 3. Define the fatal logging method
-    def fatal(self: logging.Logger, msg: str, *args: object, **kwargs: object) -> None:
-        """
-        Log a message with severity 'FATAL'.
-
-        Args:
-            self (logging.Logger): Current logger instance.
-            msg (str): The log message.
-            *args (object): Positional arguments passed to logger.
-            **kwargs (object): Keyword arguments passed to logger.
-
-        Returns:
-            None
-        """
-        if self.isEnabledFor(LogLevels.FATAL):
-            self._log(LogLevels.FATAL, msg, args, **kwargs)
-
-    # 4. Attach fatal method to Logger class if not already present
-    if not hasattr(logging.Logger, "fatal"):
-        setattr(logging.Logger, "fatal", fatal)
-
-    # 5. Mark as installed
-    _installed = True
+    # override both entry points
+    logging.Logger.fatal = _logger_fatal  # type: ignore[attr-defined]
+    logging.fatal = _root_fatal  # type: ignore[attr-defined]

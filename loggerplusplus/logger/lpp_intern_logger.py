@@ -73,46 +73,37 @@ class _LPPLogger(logging.Logger):
             exc_info=None,
             extra=None,
             stack_info: bool = False,
-            stacklevel: int = 2,
+            stacklevel: int | None = None,
             **kwargs,
     ) -> None:
         """
         Core logging method override with support for fast/default stacklevel
         policies and per-file duplication.
-
-        Args:
-            level (int): Log level.
-            msg (str): Log message.
-            args (tuple): Arguments for message formatting.
-            exc_info: Exception info if logging an error.
-            extra: Extra log record attributes.
-            stack_info (bool): Whether to include stack info.
-            stacklevel (int): Stacklevel for log record.
-            **kwargs: Extra keyword arguments.
-                - specific_file_name (str): If provided, duplicate message into
-                  a file with this name.
         """
-        # 1. Apply stacklevel policy if not explicitly overridden
-        if "stacklevel" not in kwargs:
+        # 1) Decide effective stacklevel
+        if stacklevel is None:
+            # Your existing policy: fast vs default
             if getattr(self, "_lpp_fast_stacklevel", False):
-                stacklevel = 1
+                eff_stacklevel = 1
             else:
-                stacklevel = int(getattr(self, "_lpp_default_stacklevel", stacklevel))
+                # keep your default (2 is a good default for "logger.X" helpers)
+                eff_stacklevel = int(getattr(self, "_lpp_default_stacklevel", 2))
         else:
-            stacklevel = kwargs.get("stacklevel", stacklevel)
+            try:
+                eff_stacklevel = int(stacklevel)
+            except Exception:
+                eff_stacklevel = 2
 
-        # 2. Extract special kwargs
+        # 2) Optional: read & pop your extra kwargs
         specific = kwargs.pop("specific_file_name", None)
 
-        # 3. Log normally via base class
-        super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
+        # 3) Delegate to stdlib with the effective stacklevel
+        super()._log(level, msg, args, exc_info, extra, stack_info, eff_stacklevel)
 
-        # 4. If specific file logging requested, duplicate message
+        # 4) Duplicate to specific file if requested (unchanged)
         if specific:
-            filecfg: FileConfig | None = getattr(self, "_lpp_filecfg", None)
-            formatter: logging.Formatter | None = getattr(
-                self, "_lpp_file_formatter", None
-            )
+            filecfg = getattr(self, "_lpp_filecfg", None)
+            formatter = getattr(self, "_lpp_file_formatter", None)
             if filecfg and formatter:
                 payload = str(msg) if not args else str(msg) % args
                 self._duplicate_to_specific(payload, filecfg, formatter, specific)

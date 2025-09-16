@@ -25,7 +25,20 @@ class LoggerPlusPlus:
     so repeated calls with the same identifier will not duplicate handlers.
     """
 
-    def __new__(cls, config: LoggerConfig) -> logging.Logger:
+    def __new__(
+            cls,
+            identifier: str = "",
+            config: LoggerConfig | None = None,
+            global_config: bool = False
+    ) -> logging.Logger:
+        if config is None and global_config is False:
+            config = LoggerConfig(identifier=identifier)
+        elif config and global_config is False:
+            config.identifier = identifier
+        else:
+            config = LoggerManager.get_default_config()
+            config.identifier = identifier
+
         return LoggerManager.get(config)
 
     @classmethod
