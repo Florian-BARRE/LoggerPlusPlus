@@ -1,21 +1,36 @@
-"""
-Top-level public API surface.
-Keep it small, obvious, and stable.
-"""
+# ---------------------- API ----------------------- #
+from .api import (
+    logger,
+    add,
+    remove,
+    disable,
+    enable,
+    bind,
+    configure,
+)
 
-from .factory import LoggerPlusPlus
-from .logger.manager import LoggerManager
-from .config import LoggerConfig, FormatConfig, SeparatorConfig, LevelConfig, OutputConfig, FileConfig
+# --------------------- Logger --------------------- #
+from .logger_class import LoggerClass
 
-from .logger.logger_class import LoggerClass
-from .loglevel import install_fatal_level
+# --------------------- Decorators --------------------- #
+from .decorators import catch, opt, log_io, log_timing
 
-install_fatal_level()
+# -------------------- Registry -------------------- #
+from .registry import register_identifier
 
+# ------------------- Public API ------------------- #
 __all__ = [
-    "LoggerPlusPlus",
-    "LoggerManager",
-    "LoggerConfig",
-    "FormatConfig",
-    "LoggerClass"
+    "logger",
+    "add",
+    "remove",
+    "disable",
+    "enable",
+    "bind",
+    "configure",
+    "LoggerClass",
+    "register_identifier",
+    "catch",
+    "opt",
+    "log_timing",
+    "logger",
 ]

@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loggerplusplus"
+version = "1.0.0"
+description = "LoggerPlusPlus is an enhanced Python logging module with colorized output, customizable themes, improved multi-logger management, and optimized display for better readability. Built on top of Loguru, it adds a set of features that make logging faster and more convenient to use."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { file = "LICENSE" }
+keywords = ["logging", "loguru", "logger", "structured-logging", "colorized"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Topic :: System :: Logging",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "loguru>=0.7",
+    "colorama>=0.4.6",
+    "loguru>=0.7.3",
+    "setuptools>=78.1.1",
+    "wheel>=0.45.1",
+    "win32_setctime>=1.2.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["loggerplusplus*"]
