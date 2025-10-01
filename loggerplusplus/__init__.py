@@ -1,36 +1,16 @@
-# ---------------------- API ----------------------- #
-from .api import (
-    logger,
-    add,
-    remove,
-    disable,
-    enable,
-    bind,
-    configure,
-)
-
 # --------------------- Logger --------------------- #
 from .logger_class import LoggerClass
 
-# --------------------- Decorators --------------------- #
-from .decorators import catch, opt, log_io, log_timing
+# --------------------- Logger Proxy --------------------- #
+from .proxy import LoggerPlusPlus, loggerplusplus
 
-# -------------------- Registry -------------------- #
-from .registry import register_identifier
+# `LoggerPlusPlus` : The proxy *class* that wraps around `loguru.logger`.
+# `loggerplusplus` : A ready-to-use *singleton instance* of `LoggerPlusPlus`,
+#                    provided for convenience (mirroring loguru's usage style).
 
 # ------------------- Public API ------------------- #
 __all__ = [
-    "logger",
-    "add",
-    "remove",
-    "disable",
-    "enable",
-    "bind",
-    "configure",
     "LoggerClass",
-    "register_identifier",
-    "catch",
-    "opt",
-    "log_timing",
-    "logger",
+    "LoggerPlusPlus",  # The class definition
+    "loggerplusplus",  # The singleton instance
 ]

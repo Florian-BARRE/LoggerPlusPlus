@@ -21,11 +21,6 @@ from .runtime import compose_filter
 __all__ = [
     "logger",
     "add",
-    "remove",
-    "disable",
-    "enable",
-    "bind",
-    "configure",
 ]
 
 # Re-export the base logger
@@ -89,57 +84,3 @@ def add(
         catch=catch,
         **kwargs,
     )
-
-
-def remove(handler_id: int | None = None) -> None:
-    """
-    Remove a sink from the logger.
-
-    Args:
-        handler_id (int | None): Identifier of the sink to remove.
-            If None, removes all configured sinks.
-    """
-    _loguru_logger.remove(handler_id)
-
-
-def disable(name: str) -> None:
-    """
-    Disable logging for a given module or logger name.
-
-    Args:
-        name (str): The module or logger name to disable.
-    """
-    _loguru_logger.disable(name)
-
-
-def enable(name: str) -> None:
-    """
-    Enable logging for a given module or logger name.
-
-    Args:
-        name (str): The module or logger name to enable.
-    """
-    _loguru_logger.enable(name)
-
-
-def bind(**kwargs: Any):
-    """
-    Create a new logger with extra contextual key-value pairs.
-
-    Args:
-        **kwargs (Any): Key-value pairs to bind to the logger context.
-
-    Returns:
-        Logger: A contextualized logger instance.
-    """
-    return _loguru_logger.bind(**kwargs)
-
-
-def configure(**kwargs: Any):
-    """
-    Reconfigure the logger with global settings.
-
-    Args:
-        **kwargs (Any): Configuration options for the logger.
-    """
-    return _loguru_logger.configure(**kwargs)
