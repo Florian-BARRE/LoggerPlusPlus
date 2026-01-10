@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 # ====== Standard Library Imports ======
+from typing import TypeAlias
 import re
 
 __all__: list[str] = [
@@ -32,7 +33,7 @@ _TOKEN_RE: re.Pattern[str] = re.compile(
 )
 
 # Mapping: (field, placeholder_key, align, width_spec, cap, trunc)
-type _AutoMap = tuple[str, str, str, str, int | None, str | None]
+_AutoMap: TypeAlias = tuple[str, str, str, str, int | None, str | None]
 
 
 def prepare_auto_format(fmt: str) -> tuple[str, list[_AutoMap]]:
