@@ -8,7 +8,7 @@ from __future__ import annotations
 
 # ====== Standard Library Imports ======
 from collections.abc import Callable, Mapping
-from typing import Any
+from typing import Any, Optional, Union
 
 # ====== Third-Party Library Imports ======
 from loguru import logger as _loguru_logger
@@ -30,10 +30,10 @@ logger = _loguru_logger
 def add(
         sink: Any,
         *,
-        level: int | str = "DEBUG",
-        format: str | Callable[[dict[str, Any]], str] = "{time} {level} {message}",
-        filter: Callable[[dict[str, Any]], bool] | Mapping[str, str] | None = None,
-        colorize: bool | None = None,
+        level: Union[int, str] = "DEBUG",
+        format: Union[str, Callable[[dict[str, Any]], str]] = "{time} {level} {message}",
+        filter: Optional[Union[Callable[[dict[str, Any]], bool], Mapping[str, str]]] = None,
+        colorize: Optional[bool] = None,
         serialize: bool = False,
         backtrace: bool = False,
         diagnose: bool = False,

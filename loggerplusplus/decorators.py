@@ -1,7 +1,7 @@
 # loggerPlusPlus/decorators.py
 # ====== Code Summary ======
 # Convenience decorators and wrappers around `loguru` that:
-# - provide optional identifier binding (via `extra['identifier']`),
+# - provide optional identifier binding (via `extra['identifier']),
 # - expose `catch` and `opt` helpers that respect a passed logger or identifier,
 # - add decorators to log execution timing and I/O (arguments/return values).
 # Designed to be drop-in friendly for operational and debugging use.
@@ -12,18 +12,17 @@ from __future__ import annotations
 import functools
 import time
 from collections.abc import Callable
-from typing import Any, ParamSpec, TypeVar
+from typing import Any, Optional, TypeVar, Union
 
 # ====== Third-Party Library Imports ======
 from loguru import logger as _loguru_logger
 
 __all__: list[str] = ["catch", "opt", "log_timing", "log_io"]
 
-P = ParamSpec("P")
 R = TypeVar("R")
 
 
-def _select_logger(logger: Any | None = None, identifier: str | None = None) -> Any:
+def _select_logger(logger: Optional[Any] = None, identifier: Optional[str] = None) -> Any:
     """
     Select an appropriate logger, optionally binding an identifier.
 
@@ -50,8 +49,8 @@ def _select_logger(logger: Any | None = None, identifier: str | None = None) -> 
 
 def catch(
         *decorator_args: Any,
-        identifier: str | None = None,
-        logger: Any | None = None,
+        identifier: Optional[str] = None,
+        logger: Optional[Any] = None,
         **decorator_kwargs: Any,
 ):
     """
@@ -88,8 +87,8 @@ def catch(
 
 def opt(
         *args: Any,
-        identifier: str | None = None,
-        logger: Any | None = None,
+        identifier: Optional[str] = None,
+        logger: Optional[Any] = None,
         **kwargs: Any,
 ):
     """
@@ -124,13 +123,13 @@ def opt(
 
 def log_timing(
         *,
-        logger: Any | None = None,
-        identifier: str | None = None,
+        logger: Optional[Any] = None,
+        identifier: Optional[str] = None,
         level: str = "DEBUG",
-        enter_message: str | None = None,
+        enter_message: Optional[str] = None,
         exit_message: str = "Finished {func} in {duration:.3f}s",
         show_enter: bool = True,
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
+) -> Callable[[Callable[..., R]], Callable[..., R]]:
     """
     Decorator to measure and log execution time of a function.
 
@@ -156,12 +155,13 @@ def log_timing(
         # 6. Return the function's result.
     """
 
-    def decorator(func: Callable[P, R]) -> Callable[P, R]:
+    def decorator(func: Callable[[Callable[..., R]], Callable[..., R]]) -> \
+            Callable[[Callable[..., R]], Callable[..., R]]:
         # 1. Select an appropriate logger (respect `logger`, otherwise bind `identifier` or use global).
         log = (logger or _loguru_logger.bind(identifier=identifier)) if identifier else (logger or _loguru_logger)
 
         @functools.wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        def wrapper(*args, **kwargs) -> R:
             # 2. On wrapper enter, optionally log the enter message.
             if show_enter and enter_message:
                 log.opt(lazy=True).log(level, enter_message.format(func=func.__name__))
@@ -187,14 +187,14 @@ def log_timing(
 
 def log_io(
         *,
-        logger: Any | None = None,
-        identifier: str | None = None,
+        logger: Optional[Any] = None,
+        identifier: Optional[str] = None,
         level: str = "DEBUG",
         log_args: bool = True,
         log_return: bool = True,
         message_args: str = "Calling {func} with args={args}, kwargs={kwargs}",
         message_return: str = "{func} returned {result!r}",
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
+) -> Callable[[Callable[..., R]], Callable[..., R]]:
     """
     Decorator to log function arguments and/or return value.
 
@@ -218,12 +218,13 @@ def log_io(
         # 5. Return the function's result.
     """
 
-    def decorator(func: Callable[P, R]) -> Callable[P, R]:
+    def decorator(func: Callable[[Callable[..., R]], Callable[..., R]]) -> \
+            Callable[[Callable[..., R]], Callable[..., R]]:
         # 1. Select an appropriate logger (respect `logger`, otherwise bind `identifier` or use global).
         log = (logger or _loguru_logger.bind(identifier=identifier)) if identifier else (logger or _loguru_logger)
 
         @functools.wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        def wrapper(*args, **kwargs) -> R:
             # 2. On call, optionally log the function arguments.
             if log_args:
                 log.opt(lazy=True).log(level, message_args.format(func=func.__name__, args=args, kwargs=kwargs))

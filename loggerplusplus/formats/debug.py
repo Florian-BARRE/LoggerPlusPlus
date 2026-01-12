@@ -6,6 +6,9 @@
 
 from __future__ import annotations
 
+# ====== Standard Library Imports ======
+from typing import Union
+
 # ====== Local Project Imports ======
 from .base import BaseFormat
 
@@ -32,14 +35,14 @@ class DebugFormat(BaseFormat):
             cls,
             *,
             colorized: bool = True,
-            level_width: int | str = 8,
-            identifier_width: int | str = "auto",
-            process_name_width: int | str = "auto",
-            process_id_width: int | str = "auto",
-            thread_name_width: int | str = "auto",
-            thread_id_width: int | str = "auto",
-            name_width: int | str = "auto",
-            line_width: int | str = "auto",
+            level_width: Union[int, str] = 8,
+            identifier_width: Union[int, str] = "auto",
+            process_name_width: Union[int, str] = "auto",
+            process_id_width: Union[int, str] = "auto",
+            thread_name_width: Union[int, str] = "auto",
+            thread_id_width: Union[int, str] = "auto",
+            name_width: Union[int, str] = "auto",
+            line_width: Union[int, str] = "auto",
             sep: str = " | ",
     ) -> str:
         """

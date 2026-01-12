@@ -6,16 +6,9 @@
 from __future__ import annotations
 
 # ====== Standard Library Imports ======
-import re  # (used in type annotations for re.Match in helpers' docstrings)
-
-# ====== Third-Party Library Imports ======
-# (No third-party imports required)
-
-# ====== Internal Project Imports ======
-# (No internal absolute imports required)
+from typing import Any, Optional, Union
 
 # ====== Local Project Imports ======
-from typing import Any, Final
 from collections.abc import Callable
 from .registry import _AUTO
 
@@ -23,14 +16,14 @@ __all__: list[str] = ["compose_filter"]
 
 # Runtime mapping metadata structure:
 # Mapping: (field, placeholder_key, align, width_spec, cap, trunc)
-_AutoMap = tuple[str, str, str, str, int | None, str | None]
+_AutoMap = tuple[str, str, str, str, Optional[int], Optional[str]]
 
 # Convenience type for loguru-like records
 _Record = dict[str, Any]
 
 
 def compose_filter(
-        user_filter: Callable[[dict], bool] | dict[str, str] | None,
+        user_filter: Optional[Union[Callable[[dict], bool], dict[str, str]]],
         auto_mappings: list[_AutoMap],
 ) -> Callable[[dict], bool]:
     """

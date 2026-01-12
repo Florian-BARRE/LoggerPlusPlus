@@ -6,6 +6,9 @@
 
 from __future__ import annotations
 
+# ====== Standard Library Imports ======
+from typing import Union
+
 # ====== Local Project Imports ======
 from .base import BaseFormat
 
@@ -29,10 +32,10 @@ class ShortFormat(BaseFormat):
             cls,
             *,
             colorized: bool = True,
-            level_width: int | str = 8,
-            identifier_width: int | str = "auto",
-            name_width: int | str = "auto",  # Placeholder argument for API compatibility
-            line_width: int | str = "auto",  # Placeholder argument for API compatibility
+            level_width: Union[int, str] = 8,
+            identifier_width: Union[int, str] = "auto",
+            name_width: Union[int, str] = "auto",  # Placeholder argument for API compatibility
+            line_width: Union[int, str] = "auto",  # Placeholder argument for API compatibility
             sep: str = " | ",
     ) -> str:
         """

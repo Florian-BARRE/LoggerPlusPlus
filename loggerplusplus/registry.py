@@ -8,15 +8,6 @@ from __future__ import annotations
 # ====== Standard Library Imports ======
 import threading
 
-# ====== Third-Party Library Imports ======
-# (No third-party imports required)
-
-# ====== Internal Project Imports ======
-# (No internal absolute imports required)
-
-# ====== Local Project Imports ======
-# (No local relative imports required)
-
 from typing import Any, Final
 
 __all__: list[str] = [

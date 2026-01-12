@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 # ====== Standard Library Imports ======
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 # ====== Third-Party Library Imports ======
 from loguru import logger as _core
@@ -46,7 +46,7 @@ class LoggerPlusPlus:
 
     # ---- Dynamic routing table (no signature duplication) ---- #
 
-    def _get_override(self, name: str) -> Callable | None:
+    def _get_override(self, name: str) -> Optional[Callable]:
         """
         Return an override function for selected method names.
 

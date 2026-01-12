@@ -5,6 +5,9 @@
 
 from __future__ import annotations
 
+# ====== Standard Library Imports ======
+from typing import Optional
+
 # ====== Third-Party Library Imports ======
 from loguru import logger as _loguru_logger
 
@@ -30,7 +33,7 @@ class LoggerClass:
         logger: A loguru logger instance bound with an `identifier`.
     """
 
-    def __init__(self, *, _log_identifier: str | None = None) -> None:
+    def __init__(self, *, _log_identifier: Optional[str] = None) -> None:
         """
         Initialize the logger with an identifier and register it.
 

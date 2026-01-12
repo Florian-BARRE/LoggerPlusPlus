@@ -5,6 +5,9 @@
 
 from __future__ import annotations
 
+# ====== Standard Library Imports ======
+from typing import Union
+
 # ====== Local Project Imports ======
 from .base import BaseFormat
 
@@ -25,7 +28,7 @@ class MinimalFormat(BaseFormat):
             cls,
             *,
             colorized: bool = True,
-            identifier_width: int | str = "auto",
+            identifier_width: Union[int, str] = "auto",
             sep: str = " | ",
     ) -> str:
         """

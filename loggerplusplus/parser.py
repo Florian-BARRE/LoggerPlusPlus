@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 # ====== Standard Library Imports ======
-from typing import TypeAlias
+from typing import Optional, Tuple, List
 import re
 
 __all__: list[str] = [
@@ -33,10 +33,10 @@ _TOKEN_RE: re.Pattern[str] = re.compile(
 )
 
 # Mapping: (field, placeholder_key, align, width_spec, cap, trunc)
-_AutoMap: TypeAlias = tuple[str, str, str, str, int | None, str | None]
+_AutoMap = Tuple[str, str, str, str, Optional[int], Optional[str]]
 
 
-def prepare_auto_format(fmt: str) -> tuple[str, list[_AutoMap]]:
+def prepare_auto_format(fmt: str) -> Tuple[str, List[_AutoMap]]:
     """
     Replace custom auto-width tokens with `extra` placeholders and capture metadata.
 
@@ -54,7 +54,7 @@ def prepare_auto_format(fmt: str) -> tuple[str, list[_AutoMap]]:
             - A list of mappings `(field, placeholder_key, align, width_spec, cap, trunc)`.
     """
     # 1. Initialize state for collected mappings and placeholder indexing
-    mappings: list[_AutoMap] = []
+    mappings: List[_AutoMap] = []
     idx: int = 0
 
     # 2. Define a regex replacement function capturing token components
@@ -63,8 +63,8 @@ def prepare_auto_format(fmt: str) -> tuple[str, list[_AutoMap]]:
         field_spec: str = m.group("field")
         align: str = m.group("align") or "<"
         width_spec: str = m.group("width")
-        cap: int | None = int(m.group("cap")) if m.group("cap") else None
-        trunc: str | None = m.group("trunc_in") or m.group("trunc_out")
+        cap: Optional[int] = int(m.group("cap")) if m.group("cap") else None
+        trunc: Optional[str] = m.group("trunc_in") or m.group("trunc_out")
 
         # 2.1. Allocate a unique placeholder key for this token
         placeholder_key: str = f"__lp_auto_{idx}__"
