@@ -1,0 +1,73 @@
+name: Quality
+
+# Reusable quality gate: linting, cross-platform tests, and a packaging build.
+# Called by ci.yml (on push/PR) and by publish.yml (before any PyPI upload),
+# so the exact same checks are the single source of truth everywhere.
+on:
+  workflow_call:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Install dependencies
+        run: poetry install --no-interaction
+      - name: Black
+        run: poetry run black --check src/ tests/ test_module/
+      - name: Ruff
+        run: poetry run ruff check src/ tests/ test_module/
+      - name: mypy
+        run: poetry run mypy src/
+
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        # The library's hard floor is Python 3.9 (six downstream projects + PyPI users);
+        # the dev machines run newer interpreters, so this matrix is the real 3.9 guard.
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Install dependencies
+        run: poetry install --no-interaction
+      - name: Run tests
+        run: poetry run pytest --cov=loggerplusplus --cov-report=term-missing --cov-fail-under=95
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Validate pyproject
+        run: poetry check
+      - name: Build sdist + wheel
+        run: poetry build
+      - name: Validate distribution metadata
+        run: pipx run twine check dist/*
+      - name: Smoke-install the wheel in a clean venv
+        run: |
+          python -m venv /tmp/smoke
+          /tmp/smoke/bin/pip install dist/*.whl
+          /tmp/smoke/bin/python -c "import loggerplusplus; print('import OK', loggerplusplus.__version__)"
+      - name: Upload distribution artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist
+          path: dist/

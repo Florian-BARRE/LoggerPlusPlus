@@ -1,0 +1,36 @@
+name: Release Please
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write        # create release commits, tags and GitHub Releases
+  pull-requests: write   # open/maintain the release PR
+  actions: write         # dispatch publish.yml once a release is created
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.rp.outputs.release_created }}
+      tag_name: ${{ steps.rp.outputs.tag_name }}
+    steps:
+      - name: Run release-please
+        id: rp
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      # A tag/Release pushed with GITHUB_TOKEN cannot trigger another workflow,
+      # but workflow_dispatch is the documented exception, so we dispatch it here.
+      - name: Trigger PyPI publish
+        if: steps.rp.outputs.release_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run publish.yml \
+            -R "${{ github.repository }}" \
+            -f tag="${{ steps.rp.outputs.tag_name }}" \
+            -f repository=pypi

@@ -1,39 +1,121 @@
 [build-system]
-requires = ["setuptools>=61"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=2.0.0"]
+build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "loggerplusplus"
 version = "1.0.5"
 description = "LoggerPlusPlus is an enhanced Python logging module with colorized output, customizable themes, improved multi-logger management, and optimized display for better readability. Built on top of Loguru, it adds a set of features that make logging faster and more convenient to use."
+authors = [{ name = "Florian BARRE" }]
 readme = "README.md"
-requires-python = ">=3.9"
-license = { file = "LICENSE" }
+license = "GPL-3.0-or-later"
+requires-python = ">=3.9,<4.0"
 keywords = ["logging", "loguru", "logger", "structured-logging", "colorized"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Topic :: System :: Logging",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-    "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 
+# Runtime deps only. win32-setctime is Windows-only (loguru's own file-time helper),
+# gated so it never installs elsewhere.
 dependencies = [
-    "loguru>=0.7",
-    "colorama>=0.4.6",
     "loguru>=0.7.3",
-    "setuptools>=78.1.1",
-    "wheel>=0.45.1",
-    "win32_setctime>=1.2.0",
+    "colorama>=0.4.6",
+    'win32-setctime>=1.2.0; sys_platform == "win32"',
 ]
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["loggerplusplus*"]
+[project.urls]
+Homepage = "https://github.com/Florian-BARRE/LoggerPlusPlus"
+Repository = "https://github.com/Florian-BARRE/LoggerPlusPlus"
+Documentation = "https://github.com/Florian-BARRE/LoggerPlusPlus#readme"
+
+[tool.poetry]
+packages = [{ include = "loggerplusplus", from = "src" }]
+
+[tool.poetry.group.dev.dependencies]
+# pytest + pytest-cov must install on the 3.9 test job, so they stay on 3.9-compatible majors.
+pytest = "^8.3"
+pytest-cov = "^6.0"
+ruff = "^0.16"
+# Lint-only tools run on the 3.11 `lint` job; newest majors dropped 3.9, so gate them to >=3.10
+# (they are never needed on the 3.9 test job).
+black = { version = "^26.5", python = ">=3.10" }
+mypy = { version = "^2.3", python = ">=3.10" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --cov=loggerplusplus --cov-report=term-missing"
+
+[tool.black]
+line-length = 88
+# The library ships to Python 3.9; keep Black's target on the floor.
+target-version = ["py39"]
+
+[tool.ruff]
+line-length = 88
+# Hard floor: this library ships to Python 3.9. Keep ruff pinned to it.
+target-version = "py39"
+
+[tool.ruff.lint]
+# Deliberately NO `UP` (pyupgrade): its union/PEP-604 rules rewrite `Optional[X]` -> `X | None`,
+# the exact 3.10+ syntax this package forbids on its Python 3.9 floor.
+select = ["E", "F", "I", "W", "B"]
+ignore = [
+    "E501",   # line length is handled by the formatter
+    "F541",   # f-string without placeholder (used for uniform log-call style)
+]
+
+[tool.mypy]
+# mypy 2.x no longer targets 3.9; the real 3.9 guard is the CI runtime matrix + ruff target.
+python_version = "3.10"
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+check_untyped_defs = true
+no_implicit_optional = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = ["loguru.*"]
+ignore_missing_imports = true
+
+# BaseFormat deliberately subclasses `str` (so a format instance IS a format string), which makes
+# the classmethod `format()` clash with `str.format` and the base signature — by design.
+[[tool.mypy.overrides]]
+module = ["loggerplusplus.formats.*"]
+disable_error_code = ["override"]
+
+# The decorators wrap user callables through loguru's `_Wrapped` and a generic `R`, which mypy
+# cannot reconcile with the declared `Callable[..., R]` decorator return type. Runtime is correct.
+[[tool.mypy.overrides]]
+module = ["loggerplusplus.decorators"]
+disable_error_code = ["assignment", "return-value"]
+
+# api.add() forwards a plain-dict record/filter/format to loguru, whose stubs expect the opaque
+# `Record` type; the shapes are compatible at runtime.
+[[tool.mypy.overrides]]
+module = ["loggerplusplus.api"]
+disable_error_code = ["arg-type"]
+
+# The proxy resolves overrides and forwards `__call__` dynamically over loguru's logger.
+[[tool.mypy.overrides]]
+module = ["loggerplusplus.proxy"]
+disable_error_code = ["return-value", "operator"]
+
+[tool.coverage.run]
+source = ["loggerplusplus"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 95

@@ -30,14 +30,14 @@ class ClassicFormat(BaseFormat):
 
     @classmethod
     def format(
-            cls,
-            *,
-            colorized: bool = True,
-            level_width: Union[int, str] = 8,
-            identifier_width: Union[int, str] = "auto",
-            name_width: Union[int, str] = "auto",
-            line_width: Union[int, str] = "auto",
-            sep: str = " | ",
+        cls,
+        *,
+        colorized: bool = True,
+        level_width: Union[int, str] = 8,
+        identifier_width: Union[int, str] = "auto",
+        name_width: Union[int, str] = "auto",
+        line_width: Union[int, str] = "auto",
+        sep: str = " | ",
     ) -> str:
         """
         Constructs the full log format string using stylized and aligned components.

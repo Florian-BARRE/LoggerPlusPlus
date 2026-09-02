@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import Any
 
 
 class BaseFormat(str, ABC):
@@ -56,7 +57,7 @@ class BaseFormat(str, ABC):
         # 1. Filter out empty parts and join them into one string
         return "".join(p for p in parts if p)
 
-    def __new__(cls, **overrides) -> BaseFormat:
+    def __new__(cls, **overrides: Any) -> BaseFormat:
         """
         Constructs a new instance of the format class as a `str`.
 
@@ -78,7 +79,7 @@ class BaseFormat(str, ABC):
 
     @classmethod
     @abstractmethod
-    def format(cls, **overrides) -> str:
+    def format(cls, **overrides: Any) -> str:
         """
         Abstract method to be implemented by subclasses to construct the format string.
 

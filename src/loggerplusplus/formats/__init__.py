@@ -1,8 +1,6 @@
 # ---------------------- Short ---------------------- #
-from .short import ShortFormat
-
-# ---------------------- Ops ------------------------ #
-from .ops import OpsFormat
+# --------------------- Classic --------------------- #
+from .classic import ClassicFormat
 
 # ---------------------- Debug ---------------------- #
 from .debug import DebugFormat
@@ -10,8 +8,9 @@ from .debug import DebugFormat
 # --------------------- Minimal --------------------- #
 from .minimal import MinimalFormat
 
-# --------------------- Classic --------------------- #
-from .classic import ClassicFormat
+# ---------------------- Ops ------------------------ #
+from .ops import OpsFormat
+from .short import ShortFormat
 
 # ------------------- Public API ------------------- #
 __all__ = [

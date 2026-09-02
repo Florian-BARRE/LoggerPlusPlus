@@ -32,16 +32,16 @@ class OpsFormat(BaseFormat):
 
     @classmethod
     def format(
-            cls,
-            *,
-            colorized: bool = True,
-            level_width: Union[int, str] = 8,
-            identifier_width: Union[int, str] = "auto",
-            process_name_width: Union[int, str] = "auto",
-            process_id_width: Union[int, str] = "auto",
-            thread_name_width: Union[int, str] = "auto",
-            thread_id_width: Union[int, str] = "auto",
-            sep: str = " | ",
+        cls,
+        *,
+        colorized: bool = True,
+        level_width: Union[int, str] = 8,
+        identifier_width: Union[int, str] = "auto",
+        process_name_width: Union[int, str] = "auto",
+        process_id_width: Union[int, str] = "auto",
+        thread_name_width: Union[int, str] = "auto",
+        thread_id_width: Union[int, str] = "auto",
+        sep: str = " | ",
     ) -> str:
         """
         Constructs the operations log format string including timestamp,
@@ -75,17 +75,13 @@ class OpsFormat(BaseFormat):
         return cls.build(
             "<italic><yellow>{time:YYYY-MM-DD HH:mm:ss.SSS}</yellow></italic>",
             cls._sep(sep, True, colorized),
-
             f"<level>{{level.name:^{level_width}}}</level>",
             cls._sep(sep, True, colorized),
-
             cls._sep("[", True, colorized),
             f"<light-green>{{identifier:^{identifier_width}~middle}}</light-green>",
             cls._sep("]" + sep, True, colorized),
-
             f"<cyan>PID:{{process.name:<{process_name_width}~middle}}[{{process.id:^{process_id_width}~middle}}]</cyan> ",
             f"<light-cyan>TID:{{thread.name:<{thread_name_width}~middle}}[{{thread.id:^{thread_id_width}~middle}}]</light-cyan>",
             cls._sep(sep, True, colorized),
-
             "<level>{message}</level>",
         )

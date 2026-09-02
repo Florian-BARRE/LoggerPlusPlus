@@ -5,9 +5,10 @@
 
 from __future__ import annotations
 
-# ====== Standard Library Imports ======
-from typing import Optional, Tuple, List
 import re
+
+# ====== Standard Library Imports ======
+from typing import List, Optional, Tuple
 
 __all__: list[str] = [
     "_TOKEN_RE",

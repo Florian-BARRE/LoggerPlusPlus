@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    uses: ./.github/workflows/quality.yml
+
+  # Single aggregated status to require in branch protection, so the required
+  # check name is stable regardless of the test matrix.
+  all-green:
+    needs: quality
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Verify quality gate passed
+        run: |
+          if [ "${{ needs.quality.result }}" != "success" ]; then
+            echo "::error::Quality gate did not pass (${{ needs.quality.result }})"
+            exit 1
+          fi
+          echo "All quality checks passed."

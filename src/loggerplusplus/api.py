@@ -28,18 +28,18 @@ logger = _loguru_logger
 
 
 def add(
-        sink: Any,
-        *,
-        level: Union[int, str] = "DEBUG",
-        format: Union[str, Callable[[dict[str, Any]], str]] = "{time} {level} {message}",
-        filter: Optional[Union[Callable[[dict[str, Any]], bool], Mapping[str, str]]] = None,
-        colorize: Optional[bool] = None,
-        serialize: bool = False,
-        backtrace: bool = False,
-        diagnose: bool = False,
-        enqueue: bool = False,
-        catch: bool = False,
-        **kwargs: Any,
+    sink: Any,
+    *,
+    level: Union[int, str] = "DEBUG",
+    format: Union[str, Callable[[dict[str, Any]], str]] = "{time} {level} {message}",
+    filter: Optional[Union[Callable[[dict[str, Any]], bool], Mapping[str, str]]] = None,
+    colorize: Optional[bool] = None,
+    serialize: bool = False,
+    backtrace: bool = False,
+    diagnose: bool = False,
+    enqueue: bool = False,
+    catch: bool = False,
+    **kwargs: Any,
 ) -> int:
     """
     Add a new logging sink with optional custom formatting and filters.

@@ -1,4 +1,4 @@
-from loggerplusplus import loggerplusplus, LoggerClass
+from loggerplusplus import LoggerClass, loggerplusplus
 
 
 class Worker(LoggerClass):

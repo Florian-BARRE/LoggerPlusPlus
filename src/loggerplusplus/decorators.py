@@ -12,7 +12,7 @@ from __future__ import annotations
 import functools
 import time
 from collections.abc import Callable
-from typing import Any, Optional, TypeVar, Union
+from typing import Any, Optional, TypeVar
 
 # ====== Third-Party Library Imports ======
 from loguru import logger as _loguru_logger
@@ -22,7 +22,9 @@ __all__: list[str] = ["catch", "opt", "log_timing", "log_io"]
 R = TypeVar("R")
 
 
-def _select_logger(logger: Optional[Any] = None, identifier: Optional[str] = None) -> Any:
+def _select_logger(
+    logger: Optional[Any] = None, identifier: Optional[str] = None
+) -> Any:
     """
     Select an appropriate logger, optionally binding an identifier.
 
@@ -48,11 +50,11 @@ def _select_logger(logger: Optional[Any] = None, identifier: Optional[str] = Non
 
 
 def catch(
-        *decorator_args: Any,
-        identifier: Optional[str] = None,
-        logger: Optional[Any] = None,
-        **decorator_kwargs: Any,
-):
+    *decorator_args: Any,
+    identifier: Optional[str] = None,
+    logger: Optional[Any] = None,
+    **decorator_kwargs: Any,
+) -> Any:
     """
     Drop-in replacement for loguru.logger.catch with extra convenience:
       - `identifier`: bind an identifier for caught exceptions
@@ -86,11 +88,11 @@ def catch(
 
 
 def opt(
-        *args: Any,
-        identifier: Optional[str] = None,
-        logger: Optional[Any] = None,
-        **kwargs: Any,
-):
+    *args: Any,
+    identifier: Optional[str] = None,
+    logger: Optional[Any] = None,
+    **kwargs: Any,
+) -> Any:
     """
     Convenience wrapper for logger.opt() with optional identifier or pre-bound logger.
 
@@ -122,13 +124,13 @@ def opt(
 
 
 def log_timing(
-        *,
-        logger: Optional[Any] = None,
-        identifier: Optional[str] = None,
-        level: str = "DEBUG",
-        enter_message: Optional[str] = None,
-        exit_message: str = "Finished {func} in {duration:.3f}s",
-        show_enter: bool = True,
+    *,
+    logger: Optional[Any] = None,
+    identifier: Optional[str] = None,
+    level: str = "DEBUG",
+    enter_message: Optional[str] = None,
+    exit_message: str = "Finished {func} in {duration:.3f}s",
+    show_enter: bool = True,
 ) -> Callable[[Callable[..., R]], Callable[..., R]]:
     """
     Decorator to measure and log execution time of a function.
@@ -155,13 +157,18 @@ def log_timing(
         # 6. Return the function's result.
     """
 
-    def decorator(func: Callable[[Callable[..., R]], Callable[..., R]]) -> \
-            Callable[[Callable[..., R]], Callable[..., R]]:
+    def decorator(
+        func: Callable[[Callable[..., R]], Callable[..., R]],
+    ) -> Callable[[Callable[..., R]], Callable[..., R]]:
         # 1. Select an appropriate logger (respect `logger`, otherwise bind `identifier` or use global).
-        log = (logger or _loguru_logger.bind(identifier=identifier)) if identifier else (logger or _loguru_logger)
+        log = (
+            (logger or _loguru_logger.bind(identifier=identifier))
+            if identifier
+            else (logger or _loguru_logger)
+        )
 
         @functools.wraps(func)
-        def wrapper(*args, **kwargs) -> R:
+        def wrapper(*args: Any, **kwargs: Any) -> R:
             # 2. On wrapper enter, optionally log the enter message.
             if show_enter and enter_message:
                 log.opt(lazy=True).log(level, enter_message.format(func=func.__name__))
@@ -175,7 +182,9 @@ def log_timing(
             # 5. Log the exit message with the measured duration.
             duration: float = time.perf_counter() - start
             if exit_message:
-                log.opt(lazy=True).log(level, exit_message.format(func=func.__name__, duration=duration))
+                log.opt(lazy=True).log(
+                    level, exit_message.format(func=func.__name__, duration=duration)
+                )
 
             # 6. Return the function's result.
             return result
@@ -186,14 +195,14 @@ def log_timing(
 
 
 def log_io(
-        *,
-        logger: Optional[Any] = None,
-        identifier: Optional[str] = None,
-        level: str = "DEBUG",
-        log_args: bool = True,
-        log_return: bool = True,
-        message_args: str = "Calling {func} with args={args}, kwargs={kwargs}",
-        message_return: str = "{func} returned {result!r}",
+    *,
+    logger: Optional[Any] = None,
+    identifier: Optional[str] = None,
+    level: str = "DEBUG",
+    log_args: bool = True,
+    log_return: bool = True,
+    message_args: str = "Calling {func} with args={args}, kwargs={kwargs}",
+    message_return: str = "{func} returned {result!r}",
 ) -> Callable[[Callable[..., R]], Callable[..., R]]:
     """
     Decorator to log function arguments and/or return value.
@@ -218,23 +227,33 @@ def log_io(
         # 5. Return the function's result.
     """
 
-    def decorator(func: Callable[[Callable[..., R]], Callable[..., R]]) -> \
-            Callable[[Callable[..., R]], Callable[..., R]]:
+    def decorator(
+        func: Callable[[Callable[..., R]], Callable[..., R]],
+    ) -> Callable[[Callable[..., R]], Callable[..., R]]:
         # 1. Select an appropriate logger (respect `logger`, otherwise bind `identifier` or use global).
-        log = (logger or _loguru_logger.bind(identifier=identifier)) if identifier else (logger or _loguru_logger)
+        log = (
+            (logger or _loguru_logger.bind(identifier=identifier))
+            if identifier
+            else (logger or _loguru_logger)
+        )
 
         @functools.wraps(func)
-        def wrapper(*args, **kwargs) -> R:
+        def wrapper(*args: Any, **kwargs: Any) -> R:
             # 2. On call, optionally log the function arguments.
             if log_args:
-                log.opt(lazy=True).log(level, message_args.format(func=func.__name__, args=args, kwargs=kwargs))
+                log.opt(lazy=True).log(
+                    level,
+                    message_args.format(func=func.__name__, args=args, kwargs=kwargs),
+                )
 
             # 3. Execute the function and capture the result.
             result: R = func(*args, **kwargs)
 
             # 4. On return, optionally log the result.
             if log_return:
-                log.opt(lazy=True).log(level, message_return.format(func=func.__name__, result=result))
+                log.opt(lazy=True).log(
+                    level, message_return.format(func=func.__name__, result=result)
+                )
 
             # 5. Return the function's result.
             return result

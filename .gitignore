@@ -173,3 +173,16 @@ cython_debug/
 /logs
 
 test[0-9]*.py
+
+# Tool caches
+.ruff_cache/
+
+# Claude Code (local-only tooling — not versioned)
+.claude/
+.mcp.json
+CLAUDE.md
+**/CLAUDE.md
+
+# Internal setup docs (local-only)
+/docs/setup/
+/docs/rpi/

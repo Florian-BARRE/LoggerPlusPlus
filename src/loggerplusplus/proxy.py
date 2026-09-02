@@ -12,9 +12,10 @@ from typing import Any, Callable, Optional
 # ====== Third-Party Library Imports ======
 from loguru import logger as _core
 
-# ====== Local Project Imports ======
-from .decorators import catch, opt, log_io, log_timing
 from .api import add
+
+# ====== Local Project Imports ======
+from .decorators import catch, log_io, log_timing, opt
 
 
 class LoggerPlusPlus:

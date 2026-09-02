@@ -25,11 +25,11 @@ class MinimalFormat(BaseFormat):
 
     @classmethod
     def format(
-            cls,
-            *,
-            colorized: bool = True,
-            identifier_width: Union[int, str] = "auto",
-            sep: str = " | ",
+        cls,
+        *,
+        colorized: bool = True,
+        identifier_width: Union[int, str] = "auto",
+        sep: str = " | ",
     ) -> str:
         """
         Constructs a minimal log format with only identifier and message.

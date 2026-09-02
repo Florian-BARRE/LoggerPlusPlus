@@ -7,7 +7,6 @@ from __future__ import annotations
 
 # ====== Standard Library Imports ======
 import threading
-
 from typing import Any, Final
 
 __all__: list[str] = [

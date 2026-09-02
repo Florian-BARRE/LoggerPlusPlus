@@ -1,0 +1,130 @@
+name: Publish
+
+on:
+  # Normal path: release-please dispatches this workflow with repository=pypi
+  # after it has created the tag and the GitHub Release.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing git tag to publish (e.g. v1.0.7)"
+        required: true
+      repository:
+        description: "Target index"
+        type: choice
+        options: [testpypi, pypi]
+        default: testpypi
+
+  # Escape hatch: a human manually pushing a tag also publishes to real PyPI.
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  # Re-run the full quality gate against the tagged code before any upload.
+  quality:
+    uses: ./.github/workflows/quality.yml
+
+  publish:
+    needs: quality
+    runs-on: ubuntu-latest
+    environment: ${{ (github.event_name == 'workflow_dispatch' && inputs.repository) || 'pypi' }}
+    permissions:
+      contents: write   # create the GitHub Release (tag-push path only)
+      id-token: write   # REQUIRED for PyPI Trusted Publishing (OIDC)
+
+    steps:
+      - name: Resolve tag and target index
+        id: resolve
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG="${{ inputs.tag }}"
+            TARGET="${{ inputs.repository }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+            TARGET="pypi"
+          fi
+          # Accept both plain (v1.2.3) and release-please component tags
+          # (loggerplusplus-v1.2.3).
+          if [[ ! "$TAG" =~ ^(loggerplusplus-)?v[0-9]+(\.[0-9]+){1,3}.*$ ]]; then
+            echo "::error::Invalid tag format: '$TAG' (expected e.g. v1.0.7 or loggerplusplus-v1.0.7)"
+            exit 1
+          fi
+          VERSION="${TAG##*v}"   # strip everything up to and including the last 'v'
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "target=$TARGET" >> "$GITHUB_OUTPUT"
+          echo "Publishing $TAG (version $VERSION) to $TARGET"
+
+      - name: Checkout code at tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.resolve.outputs.tag }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Verify tag == pyproject == __init__ version
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG_VERSION="${{ steps.resolve.outputs.version }}"
+          POETRY_VERSION="$(poetry version -s)"
+          INIT_VERSION="$(python -c 'import re,pathlib; print(re.search(r"__version__\s*=\s*\"([^\"]+)\"", pathlib.Path("src/loggerplusplus/__init__.py").read_text()).group(1))')"
+
+          echo "Tag:       $TAG_VERSION"
+          echo "pyproject: $POETRY_VERSION"
+          echo "__init__:  $INIT_VERSION"
+
+          if [[ "$TAG_VERSION" != "$POETRY_VERSION" ]]; then
+            echo "::error::Version mismatch (tag=$TAG_VERSION, pyproject=$POETRY_VERSION)"
+            exit 1
+          fi
+          if [[ "$INIT_VERSION" != "$POETRY_VERSION" ]]; then
+            echo "::error::__init__.__version__ ($INIT_VERSION) != pyproject ($POETRY_VERSION)"
+            exit 1
+          fi
+          echo "Version match confirmed (tag = pyproject = __init__)"
+
+      - name: Build distributions
+        run: |
+          poetry build
+          ls -lh dist/
+
+      - name: Publish to TestPyPI
+        if: steps.resolve.outputs.target == 'testpypi'
+        uses: pypa/gh-action-pypi-publish@v1.14.2  # Docker action: pinned by version tag, not commit SHA (no per-SHA image)
+        with:
+          packages-dir: dist/
+          repository-url: https://test.pypi.org/legacy/
+          print-hash: true
+
+      - name: Publish to PyPI
+        if: steps.resolve.outputs.target == 'pypi'
+        uses: pypa/gh-action-pypi-publish@v1.14.2  # Docker action: pinned by version tag, not commit SHA (no per-SHA image)
+        with:
+          packages-dir: dist/
+          print-hash: true
+
+      # Only when a human pushed a tag directly. On the release-please path the
+      # Release already exists, so we do not recreate it here.
+      - name: Create GitHub Release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.resolve.outputs.tag }}" \
+            dist/*.whl dist/*.tar.gz \
+            --title "${{ steps.resolve.outputs.tag }}" \
+            --generate-notes

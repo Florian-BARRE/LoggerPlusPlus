@@ -5,11 +5,12 @@
 
 from __future__ import annotations
 
+# ====== Local Project Imports ======
+from collections.abc import Callable
+
 # ====== Standard Library Imports ======
 from typing import Any, Optional, Union
 
-# ====== Local Project Imports ======
-from collections.abc import Callable
 from .registry import _AUTO
 
 __all__: list[str] = ["compose_filter"]
@@ -23,8 +24,8 @@ _Record = dict[str, Any]
 
 
 def compose_filter(
-        user_filter: Optional[Union[Callable[[dict], bool], dict[str, str]]],
-        auto_mappings: list[_AutoMap],
+    user_filter: Optional[Union[Callable[[dict], bool], dict[str, str]]],
+    auto_mappings: list[_AutoMap],
 ) -> Callable[[dict], bool]:
     """
     Build a filter that computes dynamic placeholders and then applies user's filter.
@@ -131,7 +132,7 @@ def compose_filter(
         if mode == "right":
             return value[: max(0, width - 1)] + "…"
         if mode == "left":
-            return "…" + value[-(width - 1):]
+            return "…" + value[-(width - 1) :]
         if mode == "middle":
             left = (width - 1) // 2
             right = width - 1 - left

@@ -1,25 +1,30 @@
-import threading
 import multiprocessing
+import threading
 
 from loggerplusplus import loggerplusplus
+from test_module import decorators as D
 from test_module.config import configure_logging
 from test_module.worker import Worker, external_function
-from test_module import decorators as D
 
 configure_logging()
+
 
 @loggerplusplus.catch()
 def decorated_task():
     loggerplusplus.bind(identifier="DECORATED").debug("Inside decorated function")
 
+
 def thread_target():
     loggerplusplus.bind(identifier="THREAD").info("Hello from thread")
+
 
 def process_target():
     # Must reconfigure logger in subprocess to have sinks!
     from test_module.config import configure_logging
+
     configure_logging()
     loggerplusplus.bind(identifier="PROCESS").info("Hello from process")
+
 
 if __name__ == "__main__":
     loggerplusplus.bind(identifier="MAIN").info("Main starting...")

@@ -29,14 +29,18 @@ class ShortFormat(BaseFormat):
 
     @classmethod
     def format(
-            cls,
-            *,
-            colorized: bool = True,
-            level_width: Union[int, str] = 8,
-            identifier_width: Union[int, str] = "auto",
-            name_width: Union[int, str] = "auto",  # Placeholder argument for API compatibility
-            line_width: Union[int, str] = "auto",  # Placeholder argument for API compatibility
-            sep: str = " | ",
+        cls,
+        *,
+        colorized: bool = True,
+        level_width: Union[int, str] = 8,
+        identifier_width: Union[int, str] = "auto",
+        name_width: Union[
+            int, str
+        ] = "auto",  # Placeholder argument for API compatibility
+        line_width: Union[
+            int, str
+        ] = "auto",  # Placeholder argument for API compatibility
+        sep: str = " | ",
     ) -> str:
         """
         Constructs the short log format string with timestamp, log level,
@@ -65,13 +69,10 @@ class ShortFormat(BaseFormat):
         return cls.build(
             "<italic><yellow>{time:YYYY-MM-DD HH:mm:ss.SSS}</yellow></italic>",
             cls._sep(sep, True, colorized),
-
             f"<level>{{level.name:^{level_width}}}</level>",
             cls._sep(sep, True, colorized),
-
             cls._sep("[", True, colorized),
             f"<light-green>{{identifier:^{identifier_width}~middle}}</light-green>",
             cls._sep("]" + sep, True, colorized),
-
             "<level>{message}</level>",
         )
