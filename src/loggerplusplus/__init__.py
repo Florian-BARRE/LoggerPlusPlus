@@ -7,6 +7,7 @@ from . import formats
 
 # --------------------- Enhanced API --------------------- #
 from .api import add
+from .bootstrap import configure_from_env, setup
 from .decorators import SENSITIVE_KEYS, catch, log_io, log_timing, opt
 from .formats import DEFAULT_THEME, Theme
 from .intercept import InterceptHandler, intercept_std_logging
@@ -50,6 +51,9 @@ __all__ = [
     "log_timing",
     "log_io",
     "SENSITIVE_KEYS",
+    # One-call setup
+    "setup",
+    "configure_from_env",
     # Standard-library logging bridge
     "intercept_std_logging",
     "InterceptHandler",

@@ -3,6 +3,32 @@
 A task-oriented guide. For the token grammar and formats see [FORMATS.md](FORMATS.md); for
 signatures and internals see [REFERENCE.md](REFERENCE.md).
 
+## One-call setup
+
+For the common case, `setup()` configures a console sink (with a format chosen by name), an
+optional plain file sink, and optional stdlib interception in a single opt-in call — replacing the
+bootstrap every service would otherwise re-implement:
+
+```python
+from loggerplusplus import setup
+
+setup(level="INFO", format="OpsFormat", file="app.log", intercept=True)
+```
+
+`configure_from_env()` does the same from environment variables, so a service reads its logging
+config the same way everywhere:
+
+```python
+from loggerplusplus import configure_from_env
+
+# LOGGING_LPP_LEVEL, LOGGING_LPP_FORMAT, LOGGING_LPP_FILE, LOGGING_LPP_COLORIZE,
+# LOGGING_LPP_ENQUEUE, LOGGING_LPP_INTERCEPT, LOGGING_LPP_ROTATION, LOGGING_LPP_RETENTION
+configure_from_env()
+```
+
+Both return the created sink ids (`{"console": ..., "file": ...}`) and never run at import time.
+For finer control, use the building blocks below directly.
+
 ## Configuring a sink
 
 LoggerPlusPlus does not configure any sink for you. As with Loguru, remove the default handler
