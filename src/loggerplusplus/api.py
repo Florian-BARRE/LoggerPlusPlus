@@ -6,14 +6,11 @@
 
 from __future__ import annotations
 
-# ====== Standard Library Imports ======
 from collections.abc import Callable, Mapping
 from typing import Any, Optional, Union
 
-# ====== Third-Party Library Imports ======
 from loguru import logger as _loguru_logger
 
-# ====== Local Project Imports ======
 from .parser import prepare_auto_format
 from .runtime import compose_filter
 
@@ -60,12 +57,12 @@ def add(
     Returns:
         int: The identifier of the newly added sink.
     """
-    # 1. Handle string format using custom auto-format parser
-    # 2. Compose filters if extra mappings are discovered
-    # 3. Fallback to direct logger add when format is callable
+    # 1. Start from the caller's values (used as-is when the format is a callable).
     new_format = format
     new_filter = filter
 
+    # 2. For string formats, rewrite auto-width tokens; if any were found, wrap the
+    #    filter so widths are computed per record (see runtime.compose_filter).
     if isinstance(format, str):
         new_format, mappings = prepare_auto_format(format)
         if mappings:

@@ -5,26 +5,96 @@
 
 from __future__ import annotations
 
-# ====== Local Project Imports ======
-from collections.abc import Callable
-
-# ====== Standard Library Imports ======
+from collections.abc import Callable, Mapping
 from typing import Any, Optional, Union
 
+from loguru import logger as _loguru_logger
+
+from .parser import _AutoMap
 from .registry import _AUTO
 
 __all__: list[str] = ["compose_filter"]
 
-# Runtime mapping metadata structure:
-# Mapping: (field, placeholder_key, align, width_spec, cap, trunc)
-_AutoMap = tuple[str, str, str, str, Optional[int], Optional[str]]
-
-# Convenience type for loguru-like records
+# Convenience type for loguru-like records.
 _Record = dict[str, Any]
 
 
+def _apply_align(value: str, align: str, width: int, *, precision: bool = False) -> str:
+    """
+    Pad (and optionally hard-cut) `value` to `width` for the given alignment.
+
+    Args:
+        value (str): The text to align.
+        align (str): One of ">", "^", "<" (anything else falls back to left).
+        width (int): Target field width.
+        precision (bool): When True, also hard-cut to `width` via format precision
+            (used only when no truncation mode was requested on the token).
+
+    Returns:
+        str: The aligned string.
+    """
+    # 1. Map our align glyph to a Python format-spec alignment (default left)
+    conv: str = ">" if align == ">" else ("^" if align == "^" else "<")
+
+    # 2. Build the spec once and format (precision adds the `.{width}` hard cut)
+    spec: str = f"{conv}{width}.{width}" if precision else f"{conv}{width}"
+    return format(value, spec)
+
+
+def _build_dict_filter(
+    mapping: Mapping[Any, Any],
+) -> Callable[[_Record], bool]:
+    """
+    Reproduce loguru's own dict-`filter` semantics as a callable.
+
+    A dict filter maps a module name (or "" / None for the root) to a minimum level;
+    the most specific matching prefix of `record["name"]` wins, `False` disables a module,
+    and `True` maps to level 0. We must replicate this here because when an auto-width token
+    is present the user's filter is wrapped (loguru never sees the original dict), so a dict
+    filter would otherwise be silently ignored.
+
+    Args:
+        mapping (Mapping[str | None, Any]): The user-supplied dict filter.
+
+    Returns:
+        Callable[[_Record], bool]: A predicate applying loguru's level-per-module rules.
+    """
+    # 1. Resolve each configured value to a comparable level number (or False to disable)
+    level_per_module: dict[str, Union[int, bool]] = {}
+    for module, level in mapping.items():
+        key = "" if module is None else module
+        if level is False:
+            level_per_module[key] = False
+        elif level is True:
+            level_per_module[key] = 0
+        elif isinstance(level, str):
+            level_per_module[key] = _loguru_logger.level(level).no
+        elif isinstance(level, int):
+            level_per_module[key] = level
+        else:  # pragma: no cover - defensive: loguru rejects other types too
+            raise TypeError(
+                f"Invalid level value for module {module!r} in filter dict: {level!r}"
+            )
+
+    def _dict_filter(record: _Record) -> bool:
+        # 2. Walk from the record's module up its dotted parents, most specific first
+        name: str = record.get("name") or ""
+        while True:
+            level = level_per_module.get(name)
+            if level is False:
+                return False
+            if level is not None:
+                return bool(record["level"].no >= level)
+            if not name:
+                return True
+            index = name.rfind(".")
+            name = name[:index] if index != -1 else ""
+
+    return _dict_filter
+
+
 def compose_filter(
-    user_filter: Optional[Union[Callable[[dict], bool], dict[str, str]]],
+    user_filter: Optional[Union[Callable[[dict], bool], Mapping[str, Any]]],
     auto_mappings: list[_AutoMap],
 ) -> Callable[[dict], bool]:
     """
@@ -34,23 +104,22 @@ def compose_filter(
     It precomputes `extra[__lp_auto_i__]` values using `auto_mappings` and the
     auto-width registry, then evaluates the original `user_filter` when provided.
 
-    Notes:
-        - If `user_filter` is a mapping (dict), this function replicates the original
-          behavior and always returns `True` (i.e., does not apply mapping-based
-          filtering here). The mapping is expected to be handled elsewhere by Loguru.
-        - Width logic:
-            * `width_spec == "auto"` uses the `_AUTO` registry's observed maximum.
-            * `cap` limits the width (and truncation) when provided.
-            * `trunc` (left/right/middle) determines how overlong text is shortened.
-            * Without `trunc`, precision formatting (`.{width}`) hard-cuts the text.
+    The width math lives here, in a loguru *filter*, because loguru calls the filter
+    exactly once per record BEFORE formatting — the only injection point where the padded
+    / truncated string can be computed and written into `record["extra"]`.
 
     Args:
-        user_filter (Callable[[dict], bool] | dict[str, str] | None): Optional upstream filter.
+        user_filter (Callable[[dict], bool] | Mapping | None): Optional upstream filter.
+            A callable is delegated to; a dict is applied with loguru's own semantics.
         auto_mappings (list[_AutoMap]): Parsed mappings describing dynamic fields.
 
     Returns:
         Callable[[dict], bool]: A filter to be passed to Loguru.
     """
+    # 0. Pre-build the dict-filter predicate once (never per record) when needed.
+    dict_filter: Optional[Callable[[_Record], bool]] = (
+        _build_dict_filter(user_filter) if isinstance(user_filter, Mapping) else None
+    )
 
     def _getattr_path(container: Any, path: str) -> Any:
         """
@@ -167,35 +236,21 @@ def compose_filter(
                 if cap is not None:
                     width = min(width, cap)
 
-            # 1.3. Truncate (if requested) before padding to avoid overflow
+            # 1.3. Truncate (if requested) before padding; otherwise hard-cut via precision
             if trunc:
-                to_pad: str = _truncate(text, width, trunc)
-                if align == ">":
-                    padded = f"{to_pad:>{width}}"
-                elif align == "^":
-                    padded = f"{to_pad:^{width}}"
-                else:
-                    padded = f"{to_pad:<{width}}"
+                padded = _apply_align(_truncate(text, width, trunc), align, width)
             else:
-                # 1.4. Use precision to hard-cut and align when no truncation mode set
-                if align == ">":
-                    padded = f"{text:>{width}.{width}}"
-                elif align == "^":
-                    padded = f"{text:^{width}.{width}}"
-                else:
-                    padded = f"{text:<{width}.{width}}"
+                padded = _apply_align(text, align, width, precision=True)
 
-            # 1.5. Attach computed placeholder into record.extra
+            # 1.4. Attach computed placeholder into record.extra
             record["extra"][placeholder_key] = padded
 
-        # 2. Evaluate the user-provided filter
-        if user_filter is None:
-            return True
+        # 2. Evaluate the user-provided filter (callable delegated; dict applied; None passes)
         if callable(user_filter):
             return bool(user_filter(record))
-
-        # 3. Original behavior: when mapping is provided, return True here
+        if dict_filter is not None:
+            return dict_filter(record)
         return True
 
-    # 4. Return the composed filter callable
+    # 3. Return the composed filter callable
     return built_filter

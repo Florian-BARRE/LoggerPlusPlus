@@ -6,35 +6,38 @@
 from __future__ import annotations
 
 import re
-
-# ====== Standard Library Imports ======
 from typing import List, Optional, Tuple
 
-__all__: list[str] = [
-    "_TOKEN_RE",
-    "_AutoMap",
-    "prepare_auto_format",
-]
+__all__: list[str] = ["prepare_auto_format"]
+
+# Canonical shape of a parsed auto-width token, shared with runtime.py:
+#   (field, placeholder_key, align, width_spec, cap, trunc)
+_AutoMap = Tuple[str, str, str, str, Optional[int], Optional[str]]
 
 # Supported examples:
 #   {identifier:<auto}
 #   {identifier:<auto[18~middle]}
 #   {level.name:^15[10~right]}
 #   {extra[service]:>auto[12~left]}
+#
+# Notes on the two guards below:
+#   - `(?<!\{)` / `(?!\})` keep the token from matching inside a doubled-brace escape
+#     (`{{identifier:<auto}}`), which Python/loguru render as a literal `{...}` — matching
+#     there would leak a raw placeholder into the output.
+#   - `\s*` after the colon tolerates an incidental space in the spec (`{identifier: <auto}`);
+#     without it the token silently fails to match, reaches loguru unrewritten, and raises
+#     KeyError on every log call because `identifier` is not a top-level record field.
 _TOKEN_RE: re.Pattern[str] = re.compile(
-    r"\{"
+    r"(?<!\{)\{"
     r"(?P<field>(?:extra\[[^\]]+\]|[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*))"
-    r":"
+    r":\s*"
     r"(?P<align>[<>\^])?"
     r"(?P<width>auto|\d+)"
     r"(?:\[(?P<cap>\d+)(?:~(?P<trunc_in>left|right|middle))?\])?"
     r"(?:~(?P<trunc_out>left|right|middle))?"
-    r"\}",
+    r"\}(?!\})",
     flags=re.UNICODE,
 )
-
-# Mapping: (field, placeholder_key, align, width_spec, cap, trunc)
-_AutoMap = Tuple[str, str, str, str, Optional[int], Optional[str]]
 
 
 def prepare_auto_format(fmt: str) -> Tuple[str, List[_AutoMap]]:

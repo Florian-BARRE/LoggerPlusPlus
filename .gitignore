@@ -177,12 +177,5 @@ test[0-9]*.py
 # Tool caches
 .ruff_cache/
 
-# Claude Code (local-only tooling — not versioned)
-.claude/
-.mcp.json
-CLAUDE.md
-**/CLAUDE.md
-
-# Internal setup docs (local-only)
-/docs/setup/
-/docs/rpi/
+# Poetry is the build/lock authority; uv lockfile is not used here
+uv.lock

@@ -11,6 +11,8 @@ from typing import Union
 # ====== Local Project Imports ======
 from .base import BaseFormat
 
+__all__: list[str] = ["MinimalFormat"]
+
 
 class MinimalFormat(BaseFormat):
     """
@@ -43,12 +45,9 @@ class MinimalFormat(BaseFormat):
             str: A compact log format string.
         """
 
-        # 1. Format identifier (center-aligned and green)
-        # 2. Add arrow separator
-        # 3. Format log message (colored by level)
-
+        # Segments: identifier -> message
         return cls.build(
-            f"<light-green>{{identifier:^{identifier_width}~middle}}</light-green>",
+            cls._identifier(identifier_width),
             cls._sep(" -> ", True, colorized),
-            "<level>{message}</level>",
+            cls._message(),
         )

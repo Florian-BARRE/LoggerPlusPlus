@@ -12,6 +12,8 @@ from typing import Union
 # ====== Local Project Imports ======
 from .base import BaseFormat
 
+__all__: list[str] = ["OpsFormat"]
+
 
 class OpsFormat(BaseFormat):
     """
@@ -61,27 +63,21 @@ class OpsFormat(BaseFormat):
             str: A fully constructed operations log format string.
         """
 
-        # 1. Format timestamp (italic + yellow)
-        # 2. Add separator
-        # 3. Format log level (center-aligned + colorized)
-        # 4. Add separator
-        # 5. Format identifier (in brackets + light green)
-        # 6. Add separator
-        # 7. Format process info (cyan, with name and ID)
-        # 8. Format thread info (light cyan, with name and ID)
-        # 9. Add separator
-        # 10. Format log message (colored by level)
-
+        # Segments: timestamp | level | [identifier] | PID/TID | message
         return cls.build(
-            "<italic><yellow>{time:YYYY-MM-DD HH:mm:ss.SSS}</yellow></italic>",
+            cls._timestamp(),
             cls._sep(sep, True, colorized),
-            f"<level>{{level.name:^{level_width}}}</level>",
+            cls._level(level_width),
             cls._sep(sep, True, colorized),
             cls._sep("[", True, colorized),
-            f"<light-green>{{identifier:^{identifier_width}~middle}}</light-green>",
+            cls._identifier(identifier_width),
             cls._sep("]" + sep, True, colorized),
-            f"<cyan>PID:{{process.name:<{process_name_width}~middle}}[{{process.id:^{process_id_width}~middle}}]</cyan> ",
-            f"<light-cyan>TID:{{thread.name:<{thread_name_width}~middle}}[{{thread.id:^{thread_id_width}~middle}}]</light-cyan>",
+            cls._process_thread(
+                process_name_width,
+                process_id_width,
+                thread_name_width,
+                thread_id_width,
+            ),
             cls._sep(sep, True, colorized),
-            "<level>{message}</level>",
+            cls._message(),
         )

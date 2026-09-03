@@ -1,22 +1,41 @@
+from __future__ import annotations
+
+from loguru import logger as _loguru_logger
+
+# --------------------- Submodules --------------------- #
+from . import formats
+
+# --------------------- Enhanced API --------------------- #
+from .api import add
+from .decorators import catch, log_io, log_timing, opt
+from .logger_class import LoggerClass
+from .proxy import LoggerPlusPlus, loggerplusplus
+
 # --------------------- Version --------------------- #
 # Single source of truth for the runtime version; kept in sync with pyproject.toml
 # by release-please (see release-please-config.json `extra-files`).
 __version__ = "1.0.5"
 
-# --------------------- Logger --------------------- #
-from .logger_class import LoggerClass
-
-# --------------------- Logger Proxy --------------------- #
-from .proxy import LoggerPlusPlus, loggerplusplus
-
-# `LoggerPlusPlus` : The proxy *class* that wraps around `loguru.logger`.
-# `loggerplusplus` : A ready-to-use *singleton instance* of `LoggerPlusPlus`,
-#                    provided for convenience (mirroring loguru's usage style).
+# `logger` is the ENHANCED, ready-to-use singleton (drop-in for loguru's `logger`),
+# so `from loggerplusplus import logger` gets the overridden add/catch/opt/... .
+logger = loggerplusplus
+# loguru passthrough, exposed so the documented remove()/add() pair is importable top-level.
+remove = _loguru_logger.remove
 
 # ------------------- Public API ------------------- #
 __all__ = [
     "__version__",
+    # Classes / singleton
     "LoggerClass",
-    "LoggerPlusPlus",  # The class definition
-    "loggerplusplus",  # The singleton instance
+    "LoggerPlusPlus",  # the proxy class
+    "loggerplusplus",  # the singleton instance
+    "logger",  # alias of the singleton
+    "formats",  # formats submodule (resolved by name downstream)
+    # Functional API (also available as methods on the singleton)
+    "add",
+    "remove",
+    "catch",
+    "opt",
+    "log_timing",
+    "log_io",
 ]

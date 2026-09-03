@@ -20,7 +20,7 @@ It provides the same simple and powerful API, while adding extra features for be
   Any class can easily get a bound logger with its class name as identifier:
 
   ```python
-  from loggerPlusPlus import LoggerClass
+  from loggerplusplus import LoggerClass
 
   class Worker(LoggerClass):
       def run(self):
@@ -52,6 +52,8 @@ pip install loggerplusplus
 ### Basic configuration
 
 ```python
+import sys
+
 from loggerplusplus import add, remove, logger
 
 remove()
@@ -74,6 +76,35 @@ Output:
 ```
 2025-09-25 14:03:12.345 | INFO     | [MAIN] | Hello from main
 ```
+
+> `logger` is the enhanced, ready-to-use singleton (a drop-in for loguru's `logger`); the same
+> API is also available on the `loggerplusplus` singleton and as top-level `add`/`remove`/`catch`/
+> `opt`/`log_timing`/`log_io`.
+
+---
+
+### Ready-made formats
+
+LoggerPlusPlus ships several colorized, auto-aligned formats. Each is resolved **by name**, which
+is convenient for driving the format from configuration:
+
+```python
+import sys
+
+from loggerplusplus import loggerplusplus, formats
+
+loggerplusplus.remove()
+loggerplusplus.add(sink=sys.stdout, level="DEBUG", format=formats.ShortFormat())
+
+# Or select one by name (e.g. from an env var), with a safe fallback:
+name = "OpsFormat"
+loggerplusplus.add(sink=sys.stdout, format=getattr(formats, name, formats.DebugFormat)())
+```
+
+Available formats: `ClassicFormat`, `ShortFormat`, `OpsFormat`, `DebugFormat`, `MinimalFormat`.
+Each accepts overrides such as `colorized=False` (plain output for file sinks) and per-field widths.
+
+The installed version is exposed as `loggerplusplus.__version__`.
 
 ---
 

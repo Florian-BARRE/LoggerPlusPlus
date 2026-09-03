@@ -12,6 +12,8 @@ from typing import Union
 # ====== Local Project Imports ======
 from .base import BaseFormat
 
+__all__: list[str] = ["ShortFormat"]
+
 
 class ShortFormat(BaseFormat):
     """
@@ -58,21 +60,14 @@ class ShortFormat(BaseFormat):
             str: A fully constructed short-format log string.
         """
 
-        # 1. Format timestamp (italic + yellow)
-        # 2. Add separator
-        # 3. Format log level (center-aligned + colorized)
-        # 4. Add separator
-        # 5. Format identifier (in brackets + light green)
-        # 6. Add separator
-        # 7. Format log message (colored by level)
-
+        # Segments: timestamp | level | [identifier] | message
         return cls.build(
-            "<italic><yellow>{time:YYYY-MM-DD HH:mm:ss.SSS}</yellow></italic>",
+            cls._timestamp(),
             cls._sep(sep, True, colorized),
-            f"<level>{{level.name:^{level_width}}}</level>",
+            cls._level(level_width),
             cls._sep(sep, True, colorized),
             cls._sep("[", True, colorized),
-            f"<light-green>{{identifier:^{identifier_width}~middle}}</light-green>",
+            cls._identifier(identifier_width),
             cls._sep("]" + sep, True, colorized),
-            "<level>{message}</level>",
+            cls._message(),
         )

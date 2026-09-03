@@ -6,62 +6,54 @@ or remove an exported name (formats are resolved by name) without a major versio
 
 ## Prerequisites
 
-- [uv](https://docs.astral.sh/uv/getting-started/installation/) — manages the venv, the lockfile,
-  and every Python version used by the gate.
+- [Poetry](https://python-poetry.org/docs/#installation) — manages the venv, the lockfile, and the
+  build backend (`poetry-core`, `src/` layout).
 
 ## Working locally
 
 ```bash
-uv sync --frozen             # install locked deps (incl. the dev group: ruff, pytest)
-uv run ruff format .         # auto-format
-uv run ruff check .          # lint
-uv run pytest                # unit suite (parser / runtime / registry)
-uv run python -m test_module.main   # manual smoke test — read the output by eye
+poetry install                 # install deps + the dev group (black, ruff, mypy, pytest, hypothesis)
+poetry run black src tests test_module   # auto-format
+poetry run ruff check src tests test_module   # lint
+poetry run mypy src            # type-check
+poetry run pytest              # unit suite (100% coverage, gate is 95%)
+poetry run python -m test_module.main    # manual smoke test — read the output by eye
 ```
 
 ## The Python 3.9 floor (non-negotiable)
 
-`requires-python = ">=3.9"`. Since development usually happens on newer interpreters, a 3.10+
-construct will not fail locally — so the **CI matrix is the real guard**: the suite and the smoke
-module run on Python 3.9 → 3.13, catching a 3.9 break before it merges.
-
-Forbidden in `loggerplusplus/`: `X | Y` unions (use `Optional` / `Union`), `match`, `StrEnum`,
-`slots=True`. Every module starts with `from __future__ import annotations`.
+`requires-python = ">=3.9,<4.0"`. Since development usually happens on newer interpreters, a 3.10+
+construct will not fail locally — so the **CI matrix is the real guard**: the suite runs on Python
+3.9 → 3.13 across Linux/macOS/Windows. Forbidden in `src/loggerplusplus/`: `X | Y` unions (use
+`Optional` / `Union`), `match`, `StrEnum`, `slots=True`. Every module starts with
+`from __future__ import annotations`.
 
 ## The CI gate
 
 Every push and PR runs the reusable gate in
-[`.github/workflows/gate.yml`](.github/workflows/gate.yml):
+[`.github/workflows/quality.yml`](.github/workflows/quality.yml):
 
 | Job | What |
 |---|---|
-| `quality` | `ruff format --check` + `ruff check` (ruff is the enforced linter) |
-| `test` | Python **3.9 → 3.13** matrix: `pytest` + the smoke module (must exit 0) |
-| `build` | `uv build` + `twine check` (valid wheel/sdist, README renders on PyPI) |
+| `lint` | `black --check` + `ruff check` + `mypy src` |
+| `test` | **Linux/macOS/Windows × Python 3.9 → 3.13** matrix: `pytest` with a 95% coverage gate |
+| `build` | `poetry build` + `twine check` + a clean-venv smoke install |
 
 A change cannot merge unless the whole gate is green — and the **same gate must pass before a
-release publishes** ([`release.yml`](.github/workflows/release.yml)).
+release publishes** ([`publish.yml`](.github/workflows/publish.yml)).
 
-Run the essentials before opening a PR:
+## Releasing (automated)
 
-```bash
-uv run ruff format --check . && uv run ruff check . && uv run pytest
-```
+Releases are driven by [release-please](https://github.com/googleapis/release-please) from
+[Conventional Commits](https://www.conventionalcommits.org/):
 
-## Releasing (maintainer)
-
-Publishing goes to PyPI via **Trusted Publishing (OIDC)** — no API token is stored in the repo.
-The one-time PyPI / GitHub environment setup is documented at the top of
-[`release.yml`](.github/workflows/release.yml).
-
-1. Bump `version` in `pyproject.toml` **in the same commit** as the change.
-2. Tag and push — the tag must match the version, or the release guard fails:
-
-   ```bash
-   git tag v1.0.7 && git push origin v1.0.7
-   ```
-
-The tag triggers the full gate, then the OIDC publish.
+1. Merge conventional commits to `main` (`fix:` → patch, `feat:` → minor, `feat!:`/`BREAKING CHANGE`
+   → major). [`release-please.yml`](.github/workflows/release-please.yml) opens/updates a release PR
+   that bumps the version (in `pyproject.toml` and `src/loggerplusplus/__init__.py`) and the
+   `CHANGELOG.md`.
+2. Merge the release PR. release-please tags the release and dispatches
+   [`publish.yml`](.github/workflows/publish.yml), which re-runs the full gate and publishes to PyPI
+   via **Trusted Publishing (OIDC)** — no API token is stored in the repo.
 
 ## Notes
 

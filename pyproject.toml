@@ -44,6 +44,7 @@ packages = [{ include = "loggerplusplus", from = "src" }]
 # pytest + pytest-cov must install on the 3.9 test job, so they stay on 3.9-compatible majors.
 pytest = "^8.3"
 pytest-cov = "^6.0"
+hypothesis = "^6.0"
 ruff = "^0.16"
 # Lint-only tools run on the 3.11 `lint` job; newest majors dropped 3.9, so gate them to >=3.10
 # (they are never needed on the 3.9 test job).
@@ -96,22 +97,11 @@ ignore_missing_imports = true
 module = ["loggerplusplus.formats.*"]
 disable_error_code = ["override"]
 
-# The decorators wrap user callables through loguru's `_Wrapped` and a generic `R`, which mypy
-# cannot reconcile with the declared `Callable[..., R]` decorator return type. Runtime is correct.
-[[tool.mypy.overrides]]
-module = ["loggerplusplus.decorators"]
-disable_error_code = ["assignment", "return-value"]
-
 # api.add() forwards a plain-dict record/filter/format to loguru, whose stubs expect the opaque
 # `Record` type; the shapes are compatible at runtime.
 [[tool.mypy.overrides]]
 module = ["loggerplusplus.api"]
 disable_error_code = ["arg-type"]
-
-# The proxy resolves overrides and forwards `__call__` dynamically over loguru's logger.
-[[tool.mypy.overrides]]
-module = ["loggerplusplus.proxy"]
-disable_error_code = ["return-value", "operator"]
 
 [tool.coverage.run]
 source = ["loggerplusplus"]
