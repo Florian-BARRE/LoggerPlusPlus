@@ -33,6 +33,14 @@ _GOLDEN = {
         "colorized": "<italic><yellow>{time:YYYY-MM-DD HH:mm:ss.SSS}</yellow></italic><light-black> | </light-black><level>{level.name:^8}</level><light-black> | </light-black><light-black>[</light-black><light-green>{identifier:^auto~middle}</light-green><light-black>] | </light-black><magenta>{name:<auto~middle}:</magenta><light-magenta>{line:<auto~middle}</light-magenta> <light-black> | </light-black><level>{message}</level>",
         "plain": "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level.name:^8} | [{identifier:^auto~middle}] | {name:<auto~middle}:{line:<auto~middle}  | {message}",
     },
+    "PlainFormat": {
+        "colorized": "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level.name:^8} | [{identifier:^auto~middle}] | {message}",
+        "plain": "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level.name:^8} | [{identifier:^auto~middle}] | {message}",
+    },
+    "FileFormat": {
+        "colorized": "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level.name:^8} | [{identifier:^auto~middle}] | {name:<auto~middle}:{line:<auto~middle}  | {message}",
+        "plain": "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level.name:^8} | [{identifier:^auto~middle}] | {name:<auto~middle}:{line:<auto~middle}  | {message}",
+    },
 }
 
 

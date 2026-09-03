@@ -3,8 +3,10 @@ from __future__ import annotations
 from .base import BaseFormat as BaseFormat
 from .classic import ClassicFormat
 from .debug import DebugFormat
+from .file import FileFormat
 from .minimal import MinimalFormat
 from .ops import OpsFormat
+from .plain import PlainFormat
 from .short import ShortFormat
 from .theme import DEFAULT_THEME as DEFAULT_THEME
 from .theme import Theme as Theme
@@ -16,7 +18,9 @@ from .theme import Theme as Theme
 __all__ = [
     "ClassicFormat",
     "DebugFormat",
+    "FileFormat",
     "MinimalFormat",
     "OpsFormat",
+    "PlainFormat",
     "ShortFormat",
 ]

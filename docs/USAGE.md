@@ -266,6 +266,23 @@ reset_widths()             # forget observed widths (they re-grow from the next 
 widened. Note that `set_max_auto_width` bounds only `auto` columns, not fixed-width tokens like
 `{name:<20}` — a fixed width is taken at face value.
 
+## Testing your logs
+
+`loggerplusplus.testing.capture()` collects records emitted within a block, so downstream tests can
+assert on them without wiring up a sink (no pytest dependency — wrap it in your own fixture if you
+like):
+
+```python
+from loggerplusplus.testing import capture
+
+with capture() as cap:
+    logger.bind(identifier="SVC").info("started")
+
+assert "started" in cap
+assert cap.records[-1]["extra"]["identifier"] == "SVC"
+assert len(cap) == 1
+```
+
 ## Multiprocessing
 
 Use Loguru's `enqueue=True` for process-safe logging:

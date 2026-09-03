@@ -77,6 +77,8 @@ variable fields.
 | `OpsFormat`     | time · level · `[identifier]` · PID/TID · message                  |
 | `DebugFormat`   | time · level · `[identifier]` · PID/TID · `name:line` · message    |
 | `MinimalFormat` | `identifier -> message`                                            |
+| `PlainFormat`   | Short layout, uncolored by default — for file sinks                |
+| `FileFormat`    | Classic layout (with `name:line`), uncolored by default — for file sinks |
 
 ### Overrides
 
