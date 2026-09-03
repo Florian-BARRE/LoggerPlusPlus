@@ -203,9 +203,27 @@ def _make_decorator(
         # 1. Resolve the effective logger once, at decoration time.
         log = _select_logger(logger=logger, identifier=identifier)
 
+        # 2. Async functions need an awaiting wrapper so timing/return reflect the actual
+        #    coroutine execution, not the creation of the coroutine object.
+        if inspect.iscoroutinefunction(func):
+
+            @functools.wraps(func)
+            async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+                state = on_enter(log, func, args, kwargs)
+                try:
+                    result = await func(*args, **kwargs)
+                except BaseException as exc:
+                    if on_error is not None:
+                        on_error(log, func, args, kwargs, exc, state)
+                    raise
+                on_exit(log, func, args, kwargs, result, state)
+                return result
+
+            return async_wrapper  # type: ignore[return-value]
+
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> R:
-            # 2. Enter hook, then call; on failure run on_error and re-raise, else on_exit.
+            # 2b. Enter hook, then call; on failure run on_error and re-raise, else on_exit.
             state = on_enter(log, func, args, kwargs)
             try:
                 result: R = func(*args, **kwargs)

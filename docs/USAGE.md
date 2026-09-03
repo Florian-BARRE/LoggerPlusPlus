@@ -183,7 +183,11 @@ def add(a, b):
     return a + b
 ```
 
-Decorators stack; each accepts a pre-bound `logger=` or an `identifier=`.
+Decorators stack; each accepts a pre-bound `logger=` or an `identifier=`. `log_timing` and `log_io`
+work on both sync and `async def` functions — on a coroutine they time and log the actual awaited
+execution and its return value (not the coroutine object). `log_io(redact=SENSITIVE_KEYS)` masks
+sensitive argument values; `log_io(max_value_length=n)` shortens huge args/returns; and
+`log_timing(min_duration=s)` logs only calls at least that slow (failures are always timed).
 
 ## Capturing standard-library logging
 
