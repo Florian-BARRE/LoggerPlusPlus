@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "loggerplusplus"
-version = "1.0.5"
+version = "1.1.0"
 description = "LoggerPlusPlus is an enhanced Python logging module with colorized output, customizable themes, improved multi-logger management, and optimized display for better readability. Built on top of Loguru, it adds a set of features that make logging faster and more convenient to use."
 authors = [{ name = "Florian BARRE" }]
 readme = "README.md"
