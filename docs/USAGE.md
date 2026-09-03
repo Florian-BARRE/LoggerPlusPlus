@@ -140,6 +140,24 @@ add_json(sink=sys.stdout, fields=("time", "level", "identifier", "message"))  # 
 {"time": "2025-09-25T14:03:12.345000+00:00", "level": "INFO", "identifier": "MAIN", "message": "started", "name": "app", "function": "run", "line": 12, "module": "app", "process": 4321, "thread": 140000, "extra": {"user": "bob"}, "exception": null}
 ```
 
+## Correlation / request context
+
+Bind a correlation or request id (and any fields) onto every record emitted within a block, so a
+request can be traced across a service. It is built on loguru's contextvars-based context, so it is
+correct under threads and asyncio tasks, and the bound fields appear in `extra` (and thus in JSON
+output or any format that references them):
+
+```python
+from loggerplusplus import bind_context, new_id
+
+with bind_context(request_id=new_id(prefix="req-"), user="bob"):
+    logger.info("handling request")   # extra carries request_id + user
+
+# Inject OpenTelemetry trace/span ids when opentelemetry is installed (never a hard dependency):
+with bind_context(otel=True):
+    logger.info("traced")             # extra carries trace_id/span_id if a span is active
+```
+
 ## Filters
 
 Callable and dict filters both work, including alongside an auto-width format:
