@@ -159,6 +159,27 @@ def add(a, b):
 
 Decorators stack; each accepts a pre-bound `logger=` or an `identifier=`.
 
+## Capturing standard-library logging
+
+Third-party libraries (uvicorn, SQLAlchemy, requests, ...) usually log through the standard
+library `logging`. Route them through LoggerPlusPlus so they share your sinks and format:
+
+```python
+import logging
+from loggerplusplus import intercept_std_logging
+
+# Take over the root logger — everything flows through loguru:
+intercept_std_logging()
+
+# Or intercept only specific trees, tagged and at a chosen level:
+intercept_std_logging(modules=["uvicorn", "sqlalchemy.engine"], level=logging.INFO)
+```
+
+Each intercepted record is re-emitted at the matching level, from the original call site, and
+bound with an `identifier` (the source logger's name by default, or a fixed `identifier=`). Call
+it once at start-up; it is opt-in and never runs at import time. For a specific module, `NOTSET`
+inherits the parent level (typically WARNING) — pass an explicit `level` to capture below that.
+
 ## Controlling the auto-width registry
 
 The `auto` width tracks the widest value seen per field over the process lifetime. A few public

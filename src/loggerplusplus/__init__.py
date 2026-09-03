@@ -9,6 +9,7 @@ from . import formats
 from .api import add
 from .decorators import SENSITIVE_KEYS, catch, log_io, log_timing, opt
 from .formats import DEFAULT_THEME, Theme
+from .intercept import InterceptHandler, intercept_std_logging
 from .logger_class import LoggerClass
 from .proxy import LoggerPlusPlus, loggerplusplus
 from .registry import (
@@ -49,6 +50,9 @@ __all__ = [
     "log_timing",
     "log_io",
     "SENSITIVE_KEYS",
+    # Standard-library logging bridge
+    "intercept_std_logging",
+    "InterceptHandler",
     # Auto-width registry controls
     "register_identifier",
     "reset_widths",
