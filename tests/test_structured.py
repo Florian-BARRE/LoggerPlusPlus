@@ -89,6 +89,49 @@ def test_add_json_serializes_unusual_extra(jsonlines: List[str]) -> None:
     assert isinstance(obj["extra"]["obj"], str)
 
 
+def test_add_json_survives_circular_reference(jsonlines: List[str]) -> None:
+    """A circular-reference extra degrades to a valid line instead of dropping the record."""
+    loop: dict = {}
+    loop["self"] = loop
+    logger.bind(loop=loop).info("cyclic")
+    obj = json.loads(jsonlines[-1])
+    assert obj["message"] == "cyclic"
+    assert "_lpp_json_error" in obj
+
+
+def test_add_json_survives_raising_str(jsonlines: List[str]) -> None:
+    """An extra whose str()/repr() raises still produces a valid, non-dropped line."""
+
+    class Bad:
+        def __repr__(self) -> str:
+            raise RuntimeError("no repr")
+
+        def __str__(self) -> str:
+            raise RuntimeError("no str")
+
+    logger.bind(bad=Bad()).info("weird")
+    obj = json.loads(jsonlines[-1])
+    assert obj["message"] == "weird"
+    assert "_lpp_json_error" in obj
+
+
+def test_add_json_does_not_pollute_later_sinks() -> None:
+    """The internal serialization key never leaks into a sink ordered after add_json."""
+    seen: List[dict] = []
+    json_id = add_json(sink=lambda m: None, level="DEBUG")
+    plain_id = logger.add(
+        lambda m: seen.append(dict(m.record["extra"])),
+        level="DEBUG",
+        format="{message}",
+    )
+    try:
+        logger.info("x")
+        assert seen and all("_lpp_json" not in extra for extra in seen)
+    finally:
+        logger.remove(json_id)
+        logger.remove(plain_id)
+
+
 def test_add_json_to_file(tmp_path: Any) -> None:
     """add_json works with a file-path sink (loguru manages the file)."""
     logfile = tmp_path / "structured.log"

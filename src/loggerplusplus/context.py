@@ -38,18 +38,19 @@ def otel_context() -> Dict[str, str]:
         dict[str, str]: `{"trace_id": ..., "span_id": ...}` for a valid current span,
             otherwise an empty dict (opentelemetry not installed, or no active span).
     """
+    # Guard the whole read: a missing OR broken/partial opentelemetry means "no context".
     try:
         from opentelemetry import trace  # optional, never a hard dependency
-    except Exception:  # noqa: BLE001 - any import/runtime issue means "no OTel context"
+
+        ctx = trace.get_current_span().get_span_context()
+        if not getattr(ctx, "is_valid", False):
+            return {}
+        return {
+            "trace_id": format(ctx.trace_id, "032x"),
+            "span_id": format(ctx.span_id, "016x"),
+        }
+    except Exception:
         return {}
-    span = trace.get_current_span()
-    ctx = span.get_span_context()
-    if not getattr(ctx, "is_valid", False):
-        return {}
-    return {
-        "trace_id": format(ctx.trace_id, "032x"),
-        "span_id": format(ctx.span_id, "016x"),
-    }
 
 
 def bind_context(

@@ -96,14 +96,28 @@ def add_json(
     """
 
     def _json_format(record: Dict[str, Any]) -> str:
-        # 1. Serialize into a private extra key, then return a template referencing it.
-        #    (loguru substitutes the value verbatim; braces inside the JSON stay literal.)
-        record["extra"]["_lpp_json"] = json.dumps(
-            _payload(record, fields), default=str, ensure_ascii=ensure_ascii
-        )
-        return "{extra[_lpp_json]}"
+        # 1. Serialize defensively: a serialization failure (circular ref, a raising
+        #    __str__, ...) must still produce a valid line, never drop the record.
+        try:
+            payload = json.dumps(
+                _payload(record, fields), default=str, ensure_ascii=ensure_ascii
+            )
+        except Exception as exc:
+            payload = json.dumps(
+                {
+                    "level": record["level"].name,
+                    "message": record["message"],
+                    "_lpp_json_error": repr(exc),
+                },
+                default=str,
+                ensure_ascii=ensure_ascii,
+            )
+        # 2. Return the JSON as a brace-escaped literal template. This avoids mutating the
+        #    shared record["extra"], so the payload can never leak into another sink's
+        #    {extra}; loguru un-escapes {{ }} back to single braces on output.
+        return payload.replace("{", "{{").replace("}", "}}")
 
-    # 2. Never colorize JSON (a '<' in a string value would break loguru markup parsing).
+    # 3. Never colorize JSON (a '<' in a string value would break loguru markup parsing).
     return _loguru_logger.add(
         sink, level=level, format=_json_format, colorize=False, **kwargs
     )

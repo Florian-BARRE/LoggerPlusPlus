@@ -94,6 +94,36 @@ def test_otel_context_ignores_invalid_span(monkeypatch: Any) -> None:
     assert otel_context() == {}
 
 
+def _install_broken_otel(monkeypatch: Any) -> None:
+    """Inject a fake `opentelemetry` whose span read raises (a broken install)."""
+    import sys
+    import types
+
+    def _boom() -> Any:
+        raise RuntimeError("broken otel")
+
+    fake = types.ModuleType("opentelemetry")
+    fake.trace = types.SimpleNamespace(get_current_span=_boom)  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "opentelemetry", fake)
+
+
+def test_otel_context_broken_install_returns_empty(monkeypatch: Any) -> None:
+    """A broken OpenTelemetry install yields an empty context, not an exception."""
+    _install_broken_otel(monkeypatch)
+    assert otel_context() == {}
+
+
+def test_bind_context_broken_otel_does_not_raise(
+    monkeypatch: Any, extras: List[Dict[str, Any]]
+) -> None:
+    """bind_context(otel=True) never propagates a broken-OTel error into the call site."""
+    _install_broken_otel(monkeypatch)
+    with bind_context(otel=True, k="v"):
+        logger.info("x")
+    assert extras[-1]["k"] == "v"
+    assert "trace_id" not in extras[-1]
+
+
 def test_bind_context_otel_flag_is_harmless(extras: List[Dict[str, Any]]) -> None:
     """otel=True adds nothing when OTel is unavailable but still binds other fields."""
     with bind_context(otel=True, foo="bar"):
