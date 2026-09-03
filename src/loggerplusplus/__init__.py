@@ -10,6 +10,12 @@ from .api import add
 from .decorators import catch, log_io, log_timing, opt
 from .logger_class import LoggerClass
 from .proxy import LoggerPlusPlus, loggerplusplus
+from .registry import (
+    observed_widths,
+    register_identifier,
+    reset_widths,
+    set_max_auto_width,
+)
 
 # --------------------- Version --------------------- #
 # Single source of truth for the runtime version; kept in sync with pyproject.toml
@@ -38,4 +44,9 @@ __all__ = [
     "opt",
     "log_timing",
     "log_io",
+    # Auto-width registry controls
+    "register_identifier",
+    "reset_widths",
+    "observed_widths",
+    "set_max_auto_width",
 ]

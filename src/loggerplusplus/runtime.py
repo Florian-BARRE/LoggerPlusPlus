@@ -12,33 +12,12 @@ from loguru import logger as _loguru_logger
 
 from .parser import _AutoMap
 from .registry import _AUTO
+from .width import render_field, sanitize
 
 __all__: list[str] = ["compose_filter"]
 
 # Convenience type for loguru-like records.
 _Record = dict[str, Any]
-
-
-def _apply_align(value: str, align: str, width: int, *, precision: bool = False) -> str:
-    """
-    Pad (and optionally hard-cut) `value` to `width` for the given alignment.
-
-    Args:
-        value (str): The text to align.
-        align (str): One of ">", "^", "<" (anything else falls back to left).
-        width (int): Target field width.
-        precision (bool): When True, also hard-cut to `width` via format precision
-            (used only when no truncation mode was requested on the token).
-
-    Returns:
-        str: The aligned string.
-    """
-    # 1. Map our align glyph to a Python format-spec alignment (default left)
-    conv: str = ">" if align == ">" else ("^" if align == "^" else "<")
-
-    # 2. Build the spec once and format (precision adds the `.{width}` hard cut)
-    spec: str = f"{conv}{width}.{width}" if precision else f"{conv}{width}"
-    return format(value, spec)
 
 
 def _build_dict_filter(
@@ -177,39 +156,6 @@ def compose_filter(
         # 3. Fallback to record["extra"][field_spec]
         return record["extra"].get(field_spec)
 
-    def _truncate(value: str, width: int, mode: str) -> str:
-        """
-        Truncate `value` to `width` using the specified mode.
-
-        Args:
-            value (str): Source string.
-            width (int): Target width (>= 0).
-            mode (str): One of {"left", "right", "middle"}.
-
-        Returns:
-            str: Truncated string respecting the mode and width.
-        """
-        # 1. No truncation needed
-        if len(value) <= width:
-            return value
-
-        # 2. Degenerate width cases
-        if width <= 1:
-            return value[:width]
-
-        # 3. Apply mode-specific truncation using ellipsis
-        if mode == "right":
-            return value[: max(0, width - 1)] + "…"
-        if mode == "left":
-            return "…" + value[-(width - 1) :]
-        if mode == "middle":
-            left = (width - 1) // 2
-            right = width - 1 - left
-            return value[:left] + "…" + value[-right:]
-
-        # 4. Fallback hard cut
-        return value[:width]
-
     def built_filter(record: _Record) -> bool:
         """
         Compute dynamic placeholders, then apply the user-provided filter if callable.
@@ -222,28 +168,24 @@ def compose_filter(
         """
         # 1. For each auto-mapping, resolve, size, and pad the placeholder value
         for field_spec, placeholder_key, align, width_spec, cap, trunc in auto_mappings:
-            # 1.1. Resolve source value and normalize to text with "-" sentinel
+            # 1.1. Resolve source value, normalize to a "-" sentinel, then sanitize
+            #      control/escape sequences (single measurement point; see width.sanitize).
             raw: Any = resolve(record, field_spec)
-            text: str = "-" if raw is None else str(raw)
+            text: str = sanitize("-" if raw is None else str(raw))
 
-            # 1.2. Determine final width (auto observed vs. fixed, then capped)
+            # 1.2. Determine final width (auto observed vs. fixed, then capped).
+            #      observe_and_width is atomic: a concurrent reset can never shrink this
+            #      record's own width below its length (see registry.observe_and_width).
             if width_spec == "auto":
-                _AUTO.observe(field_spec, text)
-                observed: int = _AUTO.width(field_spec)
+                observed: int = _AUTO.observe_and_width(field_spec, text)
                 width: int = min(observed, cap) if cap is not None else observed
             else:
                 width = max(1, int(width_spec))
                 if cap is not None:
                     width = min(width, cap)
 
-            # 1.3. Truncate (if requested) before padding; otherwise hard-cut via precision
-            if trunc:
-                padded = _apply_align(_truncate(text, width, trunc), align, width)
-            else:
-                padded = _apply_align(text, align, width, precision=True)
-
-            # 1.4. Attach computed placeholder into record.extra
-            record["extra"][placeholder_key] = padded
+            # 1.3. Truncate/hard-cut then pad to the visual width (see width.render_field)
+            record["extra"][placeholder_key] = render_field(text, width, align, trunc)
 
         # 2. Evaluate the user-provided filter (callable delegated; dict applied; None passes)
         if callable(user_filter):

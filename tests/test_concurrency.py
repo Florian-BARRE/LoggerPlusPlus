@@ -8,6 +8,7 @@ from __future__ import annotations
 import threading
 from typing import Dict, List
 
+from loggerplusplus import reset_widths, set_max_auto_width
 from loggerplusplus.parser import prepare_auto_format
 from loggerplusplus.registry import _AutoWidthRegistry
 from loggerplusplus.runtime import compose_filter
@@ -57,3 +58,44 @@ def test_auto_width_growth_is_consistent_across_threads() -> None:
     assert len(results) == 32
     for extra in results:
         assert len(extra["__lp_auto_0__"]) >= 1
+
+
+def test_reset_widths_never_hard_cuts_the_current_record() -> None:
+    """A concurrent reset_widths() must not shrink an in-flight record below its own length.
+
+    Regression for the observe()/width() two-lock race: reset landing between the two
+    calls dropped the width to its floor of 1 and hard-cut the record to a single char.
+    observe_and_width() closes the window.
+    """
+    reset_widths()
+    set_max_auto_width(None)
+    _fmt, mappings = prepare_auto_format("{extra[id]:<auto}")
+    flt = compose_filter(None, mappings)
+    ident = "IDENTIFIER_0123456789"  # 21 chars, always the widest value in play
+    too_short: List[str] = []
+    stop = threading.Event()
+
+    def logger_thread() -> None:
+        for _ in range(1500):
+            rec = {"extra": {"id": ident}}
+            flt(rec)
+            out = rec["extra"]["__lp_auto_0__"]
+            if len(out) < len(ident):  # its own value must always be fully rendered
+                too_short.append(out)
+
+    def resetter() -> None:
+        while not stop.is_set():
+            reset_widths()
+
+    workers = [threading.Thread(target=logger_thread) for _ in range(8)]
+    r = threading.Thread(target=resetter)
+    r.start()
+    for t in workers:
+        t.start()
+    for t in workers:
+        t.join()
+    stop.set()
+    r.join()
+
+    reset_widths()
+    assert too_short == []

@@ -159,6 +159,24 @@ def add(a, b):
 
 Decorators stack; each accepts a pre-bound `logger=` or an `identifier=`.
 
+## Controlling the auto-width registry
+
+The `auto` width tracks the widest value seen per field over the process lifetime. A few public
+helpers let you bound and manage that state:
+
+```python
+from loggerplusplus import set_max_auto_width, reset_widths, observed_widths, register_identifier
+
+set_max_auto_width(24)     # no auto column ever grows past 24 cells (None removes the cap)
+register_identifier("IngestWorker")  # pre-seed a width so the first line is already aligned
+observed_widths()          # -> {"identifier": 12, ...} snapshot (canonical keys), a copy
+reset_widths()             # forget observed widths (they re-grow from the next record)
+```
+
+`reset_widths()` is useful in long-running processes to release a column that a one-off huge value
+widened. Note that `set_max_auto_width` bounds only `auto` columns, not fixed-width tokens like
+`{name:<20}` — a fixed width is taken at face value.
+
 ## Multiprocessing
 
 Use Loguru's `enqueue=True` for process-safe logging:
@@ -167,6 +185,20 @@ Use Loguru's `enqueue=True` for process-safe logging:
 loggerplusplus.add(sink="app.log", enqueue=True, format=formats.OpsFormat(colorized=False))
 ```
 
-Note that the auto-width registry is per-process: each worker process aligns columns against the
-values *it* has seen, so widths can differ between processes. This is by design — the registry
-holds process-local state and never performs inter-process synchronization.
+The auto-width registry is **per-process**: each worker aligns columns against the values *it* has
+seen, so widths can differ between processes. This is by design — the registry holds process-local
+state and never synchronizes across processes. Two practical consequences:
+
+- **`fork` start method:** pre-register the known identifiers in the parent *before* starting
+  workers. Children inherit the seeded widths (copy-on-write), so their columns line up:
+
+  ```python
+  for name in ("Ingest", "Transform", "Load"):
+      register_identifier(name)
+  # ... then start the worker processes
+  ```
+
+- **`spawn` start method** (default on Windows/macOS): children re-import fresh and do **not**
+  inherit the parent's sinks or registry. Configure the sink inside each child (e.g. a `Process`
+  initializer that calls `loggerplusplus.add(...)` and re-registers identifiers), otherwise child
+  logs fall back to Loguru's default handler.

@@ -52,9 +52,17 @@ single ellipsis (`…`) and padded to the width:
 Without a `trunc` mode, an overlong value is hard-cut to the width (Loguru precision formatting),
 with no ellipsis.
 
-> Widths are measured in characters (`len`). Wide/full-width glyphs (for example CJK) and combining
-> characters count as one character each, so columns containing them may not align to their visual
-> width. This is a known limitation.
+> Widths are measured in **terminal cells** (visual width), using the standard library only: an
+> East-Asian wide/full-width glyph (for example CJK) counts as two cells and a combining or
+> zero-width mark counts as zero, so those columns align correctly. Control characters and ANSI
+> escape sequences are stripped from field values before measuring and rendering, so a stray
+> newline or colour code cannot break or misalign a log line.
+>
+> Known limitation: width is measured per code point, not per grapheme cluster. A ZWJ emoji
+> sequence (such as a family emoji) or an emoji with a skin-tone modifier is drawn as a single
+> two-cell glyph but is measured as two cells per component, so a value containing such emoji can
+> reserve a slightly-too-wide column. A precise fix would require grapheme segmentation (a
+> third-party dependency), which this package deliberately avoids.
 
 ## Ready-made formats
 
