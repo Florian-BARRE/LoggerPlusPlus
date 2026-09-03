@@ -73,9 +73,9 @@ def _build_dict_filter(
 
 
 def compose_filter(
-    user_filter: Optional[Union[Callable[[dict], bool], Mapping[str, Any]]],
+    user_filter: Optional[Union[Callable[[_Record], bool], Mapping[str, Any]]],
     auto_mappings: list[_AutoMap],
-) -> Callable[[dict], bool]:
+) -> Callable[[_Record], bool]:
     """
     Build a filter that computes dynamic placeholders and then applies user's filter.
 

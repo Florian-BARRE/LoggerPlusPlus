@@ -19,9 +19,9 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-interaction
       - name: Black
-        run: poetry run black --check src/ tests/ test_module/
+        run: poetry run black --check src/ tests/ test_module/ examples/
       - name: Ruff
-        run: poetry run ruff check src/ tests/ test_module/
+        run: poetry run ruff check src/ tests/ test_module/ examples/
       - name: mypy
         run: poetry run mypy src/
 
