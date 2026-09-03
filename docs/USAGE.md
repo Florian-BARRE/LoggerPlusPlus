@@ -187,7 +187,25 @@ loggerplusplus.add(sink="app.log", enqueue=True, format=formats.OpsFormat(colori
 
 The auto-width registry is **per-process**: each worker aligns columns against the values *it* has
 seen, so widths can differ between processes. This is by design — the registry holds process-local
-state and never synchronizes across processes. Two practical consequences:
+state and never synchronizes across processes (a shared registry would add per-record IPC on the
+logging hot path).
+
+To align columns **across processes** without that cost, export the widths in the parent and import
+them in each worker's start-up — this works for both `fork` and `spawn`:
+
+```python
+from loggerplusplus import observed_widths, import_widths
+
+snapshot = observed_widths()          # in the parent, once widths are known
+
+def _init(widths):                    # Process initializer, runs in each child
+    import_widths(widths)
+    loggerplusplus.add(sink="app.log", enqueue=True, format=formats.OpsFormat(colorized=False))
+
+# multiprocessing.Pool(initializer=_init, initargs=(snapshot,))  # or a Process target
+```
+
+Two further notes on the start method:
 
 - **`fork` start method:** pre-register the known identifiers in the parent *before* starting
   workers. Children inherit the seeded widths (copy-on-write), so their columns line up:

@@ -11,6 +11,7 @@ from .decorators import catch, log_io, log_timing, opt
 from .logger_class import LoggerClass
 from .proxy import LoggerPlusPlus, loggerplusplus
 from .registry import (
+    import_widths,
     observed_widths,
     register_identifier,
     reset_widths,
@@ -49,4 +50,5 @@ __all__ = [
     "reset_widths",
     "observed_widths",
     "set_max_auto_width",
+    "import_widths",
 ]

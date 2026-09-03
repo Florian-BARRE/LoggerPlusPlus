@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import threading
-from typing import Any, Dict, Final, Optional
+from typing import Any, Dict, Final, Mapping, Optional
 
 from .width import sanitize, visual_width
 
@@ -16,6 +16,7 @@ __all__: list[str] = [
     "reset_widths",
     "observed_widths",
     "set_max_auto_width",
+    "import_widths",
 ]
 
 
@@ -153,6 +154,13 @@ class _AutoWidthRegistry:
         with self._lock:
             return dict(self._max_seen)
 
+    def merge(self, widths: Mapping[str, int]) -> None:
+        """Merge external widths (canonical keys), keeping the maximum per field."""
+        with self._lock:
+            for key, value in widths.items():
+                if value > self._max_seen.get(_canonical(key), 0):
+                    self._max_seen[_canonical(key)] = value
+
     def set_max_width(self, max_width: Optional[int]) -> None:
         """Set (or clear, with None) the global cap on auto widths."""
         if max_width is not None and max_width < 1:
@@ -206,3 +214,19 @@ def set_max_auto_width(max_width: Optional[int]) -> None:
         max_width (int | None): Maximum cells for any auto field, or None to remove the cap.
     """
     _AUTO.set_max_width(max_width)
+
+
+def import_widths(widths: Mapping[str, int]) -> None:
+    """
+    Seed this process's auto widths from a snapshot (keeping the max per field).
+
+    The auto-width registry is process-local, so under multiprocessing each worker aligns
+    to the values it has seen. To align columns ACROSS processes without per-record IPC,
+    snapshot the widths in the parent with `observed_widths()` and pass them to each worker,
+    which calls `import_widths(snapshot)` in its start-up (a `Process` initializer). This
+    works for both `fork` and `spawn` start methods.
+
+    Args:
+        widths (Mapping[str, int]): Field -> width, as returned by `observed_widths()`.
+    """
+    _AUTO.merge(widths)
