@@ -120,6 +120,26 @@ For a file sink, disable color:
 loggerplusplus.add(sink="app.log", format=formats.ClassicFormat(colorized=False))
 ```
 
+## Structured (JSON) logging
+
+For log pipelines (ELK, Loki, Datadog, ...), `add_json()` installs a sink that emits one compact
+JSON object per record — with the identifier promoted, the user `extra` preserved, and a structured
+`exception` — using loguru's own destination handling (stream, callable, or file path, with
+rotation/retention/enqueue):
+
+```python
+import sys
+from loggerplusplus import add_json
+
+add_json(sink=sys.stdout, level="INFO")
+add_json(sink="app.jsonl", rotation="50 MB")            # newline-delimited JSON file
+add_json(sink=sys.stdout, fields=("time", "level", "identifier", "message"))  # trim the schema
+```
+
+```json
+{"time": "2025-09-25T14:03:12.345000+00:00", "level": "INFO", "identifier": "MAIN", "message": "started", "name": "app", "function": "run", "line": 12, "module": "app", "process": 4321, "thread": 140000, "extra": {"user": "bob"}, "exception": null}
+```
+
 ## Filters
 
 Callable and dict filters both work, including alongside an auto-width format:

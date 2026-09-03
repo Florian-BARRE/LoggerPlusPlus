@@ -97,10 +97,10 @@ ignore_missing_imports = true
 module = ["loggerplusplus.formats.*"]
 disable_error_code = ["override"]
 
-# api.add() forwards a plain-dict record/filter/format to loguru, whose stubs expect the opaque
-# `Record` type; the shapes are compatible at runtime.
+# api.add() / structured.add_json() forward a plain-dict record/filter/format to loguru, whose
+# stubs expect the opaque `Record` type; the shapes are compatible at runtime.
 [[tool.mypy.overrides]]
-module = ["loggerplusplus.api"]
+module = ["loggerplusplus.api", "loggerplusplus.structured"]
 disable_error_code = ["arg-type"]
 
 [tool.coverage.run]

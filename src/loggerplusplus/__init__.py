@@ -20,6 +20,7 @@ from .registry import (
     reset_widths,
     set_max_auto_width,
 )
+from .structured import add_json
 
 # --------------------- Version --------------------- #
 # Single source of truth for the runtime version; kept in sync with pyproject.toml
@@ -51,6 +52,8 @@ __all__ = [
     "log_timing",
     "log_io",
     "SENSITIVE_KEYS",
+    # Structured (JSON) output
+    "add_json",
     # One-call setup
     "setup",
     "configure_from_env",
