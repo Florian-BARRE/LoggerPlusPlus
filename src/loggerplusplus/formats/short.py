@@ -6,11 +6,10 @@
 
 from __future__ import annotations
 
-# ====== Standard Library Imports ======
 from typing import Union
 
-# ====== Local Project Imports ======
 from .base import BaseFormat
+from .theme import DEFAULT_THEME, Theme, resolve_theme
 
 __all__: list[str] = ["ShortFormat"]
 
@@ -43,6 +42,7 @@ class ShortFormat(BaseFormat):
             int, str
         ] = "auto",  # Placeholder argument for API compatibility
         sep: str = " | ",
+        theme: Theme = DEFAULT_THEME,
     ) -> str:
         """
         Constructs the short log format string with timestamp, log level,
@@ -60,14 +60,15 @@ class ShortFormat(BaseFormat):
             str: A fully constructed short-format log string.
         """
 
+        theme = resolve_theme(theme)
         # Segments: timestamp | level | [identifier] | message
         return cls.build(
-            cls._timestamp(),
-            cls._sep(sep, True, colorized),
-            cls._level(level_width),
-            cls._sep(sep, True, colorized),
-            cls._sep("[", True, colorized),
-            cls._identifier(identifier_width),
-            cls._sep("]" + sep, True, colorized),
-            cls._message(),
+            cls._timestamp(colorized, theme),
+            cls._sep(sep, True, colorized, theme),
+            cls._level(level_width, colorized),
+            cls._sep(sep, True, colorized, theme),
+            cls._sep("[", True, colorized, theme),
+            cls._identifier(identifier_width, colorized, theme),
+            cls._sep("]" + sep, True, colorized, theme),
+            cls._message(colorized),
         )

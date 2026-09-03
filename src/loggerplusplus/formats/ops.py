@@ -6,11 +6,10 @@
 
 from __future__ import annotations
 
-# ====== Standard Library Imports ======
 from typing import Union
 
-# ====== Local Project Imports ======
 from .base import BaseFormat
+from .theme import DEFAULT_THEME, Theme, resolve_theme
 
 __all__: list[str] = ["OpsFormat"]
 
@@ -44,6 +43,7 @@ class OpsFormat(BaseFormat):
         thread_name_width: Union[int, str] = "auto",
         thread_id_width: Union[int, str] = "auto",
         sep: str = " | ",
+        theme: Theme = DEFAULT_THEME,
     ) -> str:
         """
         Constructs the operations log format string including timestamp,
@@ -63,21 +63,24 @@ class OpsFormat(BaseFormat):
             str: A fully constructed operations log format string.
         """
 
+        theme = resolve_theme(theme)
         # Segments: timestamp | level | [identifier] | PID/TID | message
         return cls.build(
-            cls._timestamp(),
-            cls._sep(sep, True, colorized),
-            cls._level(level_width),
-            cls._sep(sep, True, colorized),
-            cls._sep("[", True, colorized),
-            cls._identifier(identifier_width),
-            cls._sep("]" + sep, True, colorized),
+            cls._timestamp(colorized, theme),
+            cls._sep(sep, True, colorized, theme),
+            cls._level(level_width, colorized),
+            cls._sep(sep, True, colorized, theme),
+            cls._sep("[", True, colorized, theme),
+            cls._identifier(identifier_width, colorized, theme),
+            cls._sep("]" + sep, True, colorized, theme),
             cls._process_thread(
                 process_name_width,
                 process_id_width,
                 thread_name_width,
                 thread_id_width,
+                colorized,
+                theme,
             ),
-            cls._sep(sep, True, colorized),
-            cls._message(),
+            cls._sep(sep, True, colorized, theme),
+            cls._message(colorized),
         )

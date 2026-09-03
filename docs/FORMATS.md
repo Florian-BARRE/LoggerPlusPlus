@@ -99,6 +99,25 @@ formats.ShortFormat(level_width=5, sep="  ")           # tighter layout
 formats.DebugFormat(identifier_width=20)               # fixed identifier column
 ```
 
+### Theming
+
+Every shipped format accepts a `theme` override to recolor its segments without rewriting the
+format. The default reproduces the historical colors exactly, so omitting `theme` changes nothing.
+
+```python
+from loggerplusplus import Theme, formats
+
+theme = Theme(timestamp="cyan", identifier="magenta", separator="dim")
+formats.ShortFormat(theme=theme)
+```
+
+`Theme` is a frozen dataclass with the color roles `timestamp`, `identifier`, `name`, `line`,
+`process`, `thread`, and `separator` (loguru markup color names, `#rrggbb` hex, or 8-bit codes). An
+invalid color is rejected at `Theme(...)` construction with a clear, field-named error, rather than
+crashing loguru later inside `add()`. The log level and message stay on loguru's dynamic `<level>`
+color and are intentionally not themeable. With `colorized=False`, all color tags are dropped
+(including the theme's), yielding a plain template suitable for file sinks.
+
 ### Selecting by name
 
 Because a format is chosen by class name, a service can drive it from configuration:

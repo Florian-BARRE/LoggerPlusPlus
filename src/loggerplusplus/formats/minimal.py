@@ -5,11 +5,10 @@
 
 from __future__ import annotations
 
-# ====== Standard Library Imports ======
 from typing import Union
 
-# ====== Local Project Imports ======
 from .base import BaseFormat
+from .theme import DEFAULT_THEME, Theme, resolve_theme
 
 __all__: list[str] = ["MinimalFormat"]
 
@@ -32,6 +31,7 @@ class MinimalFormat(BaseFormat):
         colorized: bool = True,
         identifier_width: Union[int, str] = "auto",
         sep: str = " | ",
+        theme: Theme = DEFAULT_THEME,
     ) -> str:
         """
         Constructs a minimal log format with only identifier and message.
@@ -40,14 +40,16 @@ class MinimalFormat(BaseFormat):
             colorized (bool): Whether to apply color/styling tags to the output (default: True).
             identifier_width (int | str): Width for the identifier field (default: "auto").
             sep (str): Separator string (not directly used here but accepted for API compatibility).
+            theme (Theme): Color theme for the segments (default: DEFAULT_THEME).
 
         Returns:
             str: A compact log format string.
         """
 
+        theme = resolve_theme(theme)
         # Segments: identifier -> message
         return cls.build(
-            cls._identifier(identifier_width),
-            cls._sep(" -> ", True, colorized),
-            cls._message(),
+            cls._identifier(identifier_width, colorized, theme),
+            cls._sep(" -> ", True, colorized, theme),
+            cls._message(colorized),
         )

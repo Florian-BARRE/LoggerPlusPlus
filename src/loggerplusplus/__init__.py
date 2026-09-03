@@ -7,7 +7,8 @@ from . import formats
 
 # --------------------- Enhanced API --------------------- #
 from .api import add
-from .decorators import catch, log_io, log_timing, opt
+from .decorators import SENSITIVE_KEYS, catch, log_io, log_timing, opt
+from .formats import DEFAULT_THEME, Theme
 from .logger_class import LoggerClass
 from .proxy import LoggerPlusPlus, loggerplusplus
 from .registry import (
@@ -38,6 +39,8 @@ __all__ = [
     "loggerplusplus",  # the singleton instance
     "logger",  # alias of the singleton
     "formats",  # formats submodule (resolved by name downstream)
+    "Theme",  # color theme for the formats
+    "DEFAULT_THEME",
     # Functional API (also available as methods on the singleton)
     "add",
     "remove",
@@ -45,6 +48,7 @@ __all__ = [
     "opt",
     "log_timing",
     "log_io",
+    "SENSITIVE_KEYS",
     # Auto-width registry controls
     "register_identifier",
     "reset_widths",

@@ -9,6 +9,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, Union
 
+from .theme import DEFAULT_THEME, Theme
+
 __all__: list[str] = ["BaseFormat"]
 
 _WidthT = Union[int, str]
@@ -36,7 +38,12 @@ class BaseFormat(str, ABC):
     # ---- Shared segment builders (keep concrete formats DRY) ---- #
 
     @staticmethod
-    def _sep(sep: str, dim: bool, colorized: bool) -> str:
+    def _paint(content: str, color: str, colorized: bool) -> str:
+        """Wrap `content` in a `<color>` tag when colorized, else return it unstyled."""
+        return f"<{color}>{content}</{color}>" if colorized else content
+
+    @staticmethod
+    def _sep(sep: str, dim: bool, colorized: bool, theme: Theme = DEFAULT_THEME) -> str:
         """
         Returns a formatted separator string with optional dimmed styling.
 
@@ -44,27 +51,38 @@ class BaseFormat(str, ABC):
             sep (str): The separator character(s).
             dim (bool): Whether to apply dimming.
             colorized (bool): Whether to apply colorization.
+            theme (Theme): Color theme supplying the separator color.
 
         Returns:
             str: The final separator string, potentially with style markup.
         """
-        # If both colorization and dimming are enabled, apply light-black styling
-        return f"<light-black>{sep}</light-black>" if colorized and dim else sep
+        # If both colorization and dimming are enabled, apply the theme's separator color
+        c = theme.separator
+        return f"<{c}>{sep}</{c}>" if colorized and dim else sep
 
     @classmethod
-    def _timestamp(cls) -> str:
-        """Return the italic-yellow timestamp segment."""
-        return "<italic><yellow>{time:YYYY-MM-DD HH:mm:ss.SSS}</yellow></italic>"
+    def _timestamp(cls, colorized: bool = True, theme: Theme = DEFAULT_THEME) -> str:
+        """Return the timestamp segment, italic + theme-colored when colorized."""
+        ts = "{time:YYYY-MM-DD HH:mm:ss.SSS}"
+        return (
+            f"<italic>{cls._paint(ts, theme.timestamp, colorized)}</italic>"
+            if colorized
+            else ts
+        )
 
     @classmethod
-    def _level(cls, width: _WidthT) -> str:
-        """Return the center-aligned, level-colored log-level segment."""
-        return f"<level>{{level.name:^{width}}}</level>"
+    def _level(cls, width: _WidthT, colorized: bool = True) -> str:
+        """Return the center-aligned log-level segment (level-colored when colorized)."""
+        return cls._paint(f"{{level.name:^{width}}}", "level", colorized)
 
     @classmethod
-    def _identifier(cls, width: _WidthT) -> str:
-        """Return the light-green, middle-truncated identifier segment."""
-        return f"<light-green>{{identifier:^{width}~middle}}</light-green>"
+    def _identifier(
+        cls, width: _WidthT, colorized: bool = True, theme: Theme = DEFAULT_THEME
+    ) -> str:
+        """Return the middle-truncated identifier segment (theme-colored when colorized)."""
+        return cls._paint(
+            f"{{identifier:^{width}~middle}}", theme.identifier, colorized
+        )
 
     @classmethod
     def _process_thread(
@@ -73,27 +91,45 @@ class BaseFormat(str, ABC):
         process_id_width: _WidthT,
         thread_name_width: _WidthT,
         thread_id_width: _WidthT,
+        colorized: bool = True,
+        theme: Theme = DEFAULT_THEME,
     ) -> str:
-        """Return the cyan PID + light-cyan TID metadata segment."""
+        """Return the process (PID) + thread (TID) metadata segment."""
+        pid_part = (
+            f"PID:{{process.name:<{process_name_width}~middle}}"
+            f"[{{process.id:^{process_id_width}~middle}}]"
+        )
+        tid_part = (
+            f"TID:{{thread.name:<{thread_name_width}~middle}}"
+            f"[{{thread.id:^{thread_id_width}~middle}}]"
+        )
         return (
-            f"<cyan>PID:{{process.name:<{process_name_width}~middle}}"
-            f"[{{process.id:^{process_id_width}~middle}}]</cyan> "
-            f"<light-cyan>TID:{{thread.name:<{thread_name_width}~middle}}"
-            f"[{{thread.id:^{thread_id_width}~middle}}]</light-cyan>"
+            cls._paint(pid_part, theme.process, colorized)
+            + " "
+            + cls._paint(tid_part, theme.thread, colorized)
         )
 
     @classmethod
-    def _location(cls, name_width: _WidthT, line_width: _WidthT) -> str:
-        """Return the magenta source name + light-magenta line-number segment."""
+    def _location(
+        cls,
+        name_width: _WidthT,
+        line_width: _WidthT,
+        colorized: bool = True,
+        theme: Theme = DEFAULT_THEME,
+    ) -> str:
+        """Return the source name + line-number segment."""
+        name_part = f"{{name:<{name_width}~middle}}:"
+        line_part = f"{{line:<{line_width}~middle}}"
         return (
-            f"<magenta>{{name:<{name_width}~middle}}:</magenta>"
-            f"<light-magenta>{{line:<{line_width}~middle}}</light-magenta> "
+            cls._paint(name_part, theme.name, colorized)
+            + cls._paint(line_part, theme.line, colorized)
+            + " "
         )
 
     @classmethod
-    def _message(cls) -> str:
-        """Return the level-colored message segment."""
-        return "<level>{message}</level>"
+    def _message(cls, colorized: bool = True) -> str:
+        """Return the message segment (level-colored when colorized)."""
+        return cls._paint("{message}", "level", colorized)
 
     @classmethod
     def build(cls, *parts: str) -> str:

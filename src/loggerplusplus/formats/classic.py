@@ -5,11 +5,10 @@
 
 from __future__ import annotations
 
-# ====== Standard Library Imports ======
 from typing import Union
 
-# ====== Local Project Imports ======
 from .base import BaseFormat
+from .theme import DEFAULT_THEME, Theme, resolve_theme
 
 __all__: list[str] = ["ClassicFormat"]
 
@@ -40,6 +39,7 @@ class ClassicFormat(BaseFormat):
         name_width: Union[int, str] = "auto",
         line_width: Union[int, str] = "auto",
         sep: str = " | ",
+        theme: Theme = DEFAULT_THEME,
     ) -> str:
         """
         Constructs the full log format string using stylized and aligned components.
@@ -51,21 +51,23 @@ class ClassicFormat(BaseFormat):
             name_width (int | str): Width for the module name field (default: "auto").
             line_width (int | str): Width for the line number field (default: "auto").
             sep (str): Separator string between format components (default: " | ").
+            theme (Theme): Color theme for the segments (default: DEFAULT_THEME).
 
         Returns:
             str: A fully constructed log format string compatible with the logging renderer.
         """
 
+        theme = resolve_theme(theme)
         # Segments: timestamp | level | [identifier] | name:line | message
         return cls.build(
-            cls._timestamp(),
-            cls._sep(sep, True, colorized),
-            cls._level(level_width),
-            cls._sep(sep, True, colorized),
-            cls._sep("[", True, colorized),
-            cls._identifier(identifier_width),
-            cls._sep("]" + sep, True, colorized),
-            cls._location(name_width, line_width),
-            cls._sep(sep, True, colorized),
-            cls._message(),
+            cls._timestamp(colorized, theme),
+            cls._sep(sep, True, colorized, theme),
+            cls._level(level_width, colorized),
+            cls._sep(sep, True, colorized, theme),
+            cls._sep("[", True, colorized, theme),
+            cls._identifier(identifier_width, colorized, theme),
+            cls._sep("]" + sep, True, colorized, theme),
+            cls._location(name_width, line_width, colorized, theme),
+            cls._sep(sep, True, colorized, theme),
+            cls._message(colorized),
         )
