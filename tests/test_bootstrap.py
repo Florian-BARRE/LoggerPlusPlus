@@ -85,7 +85,6 @@ def test_configure_from_env_drives_setup(monkeypatch: Any, tmp_path: Any) -> Non
 
 def test_configure_from_env_booleans(monkeypatch: Any) -> None:
     """Boolean env variables are parsed and forwarded to setup."""
-    messages: List[str] = []
     monkeypatch.setenv("LOGGING_LPP_FORMAT", "{extra[identifier]}|{message}")
     monkeypatch.setenv("LOGGING_LPP_INTERCEPT", "true")
     monkeypatch.setenv("LOGGING_LPP_ENQUEUE", "no")
@@ -93,6 +92,15 @@ def test_configure_from_env_booleans(monkeypatch: Any) -> None:
     configure_from_env()
     logging.getLogger("envlib").warning("env intercept")
     # Nothing to capture from stderr here; the call must simply not raise.
+
+
+def test_setup_remove_existing_clears_all_sinks() -> None:
+    """remove_existing=True drops every sink, including ones the app added."""
+    app: List[str] = []
+    logger.add(app.append, level="DEBUG", format="{message}")
+    setup(format="{message}", sink=lambda m: None, remove_existing=True)
+    logger.info("gone")
+    assert not any("gone" in m for m in app)
 
 
 @pytest.mark.parametrize(
@@ -114,15 +122,55 @@ def test_env_bool(value: str, expected: bool) -> None:
 def test_resolve_format_variants() -> None:
     """Format names resolve to instances; other strings/objects pass through."""
     assert isinstance(_resolve_format("ShortFormat", True), formats.ShortFormat)
-    assert _resolve_format("{message}", True) == "{message}"
-    assert (
-        _resolve_format("BaseFormat", True) == "BaseFormat"
-    )  # abstract base not instantiated
+    assert _resolve_format("{message}", True) == "{message}"  # template (has braces)
     inst = formats.OpsFormat()
-    assert _resolve_format(inst, True) is inst
+    assert _resolve_format(inst, True) is inst  # a format instance is itself a template
 
     def _callable_format(record: Any) -> str:
         return "custom"
 
     # A non-string (callable) format passes straight through.
     assert _resolve_format(_callable_format, True) is _callable_format
+
+
+def test_unknown_format_name_raises() -> None:
+    """A bare-identifier format name that is not a shipped format raises (not literal)."""
+    with pytest.raises(ValueError, match="unknown format name"):
+        _resolve_format("Nope", True)
+    with pytest.raises(ValueError):
+        _resolve_format("BaseFormat", True)  # abstract base is not a usable format
+    with pytest.raises(ValueError):
+        setup(format="NotAFormat", sink=lambda m: None)
+
+
+def test_configure_from_env_numeric_level(monkeypatch: Any, tmp_path: Any) -> None:
+    """A numeric level from the environment is coerced to int and applied."""
+    logfile = tmp_path / "num.log"
+    monkeypatch.setenv("LOGGING_LPP_LEVEL", "30")  # WARNING as a number
+    monkeypatch.setenv("LOGGING_LPP_FORMAT", "{level.name}|{message}")
+    monkeypatch.setenv("LOGGING_LPP_FILE", str(logfile))
+    configure_from_env()
+    logger.info("below")  # 20 < 30 -> filtered
+    logger.warning("at threshold")  # 30 -> shown
+    logger.remove()
+    content = logfile.read_text()
+    assert "below" not in content
+    assert "at threshold" in content
+
+
+def test_setup_default_keeps_app_sinks() -> None:
+    """The default setup() removes only loguru's default handler, not app-added sinks."""
+    app: List[str] = []
+    logger.add(app.append, level="DEBUG", format="{message}")
+    setup(format="{message}", sink=lambda m: None)  # defaults: remove_default only
+    logger.info("still here")
+    assert any("still here" in m for m in app)
+
+
+def test_setup_default_when_default_handler_already_gone() -> None:
+    """Removing loguru's absent default handler is a no-op, not an error."""
+    logger.remove()  # ensure handler id 0 is gone
+    messages: List[str] = []
+    setup(format="{message}", sink=messages.append)  # remove(0) raises -> ignored
+    logger.info("ok")
+    assert any("ok" in m for m in messages)

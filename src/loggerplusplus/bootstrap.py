@@ -30,11 +30,15 @@ def _resolve_format(fmt: Any, colorized: bool) -> Any:
     """
     Resolve a format spec to something loguru accepts.
 
-    A string that names a shipped format class is instantiated (with `colorized`); any
-    other string is treated as a raw loguru format template; anything else is returned
-    unchanged (a BaseFormat instance or a callable).
+    A bare identifier is treated as a format NAME and instantiated from the shipped
+    formats (an unknown name raises, rather than silently rendering the word literally).
+    A string containing `{` is a raw loguru template. A format instance is itself a
+    template (it subclasses `str`), and any other object (e.g. a callable) passes through.
+
+    Raises:
+        ValueError: If a bare-identifier name does not resolve to a shipped format.
     """
-    if isinstance(fmt, str):
+    if isinstance(fmt, str) and "{" not in fmt and fmt.isidentifier():
         cls = getattr(formats, fmt, None)
         if (
             isinstance(cls, type)
@@ -42,7 +46,10 @@ def _resolve_format(fmt: Any, colorized: bool) -> Any:
             and cls is not formats.BaseFormat
         ):
             return cls(colorized=colorized)
-        return fmt
+        raise ValueError(
+            f"unknown format name {fmt!r}; use a shipped format class name "
+            "(e.g. 'ShortFormat') or a loguru template containing '{...}'"
+        )
     return fmt
 
 
@@ -59,7 +66,8 @@ def setup(
     retention: Optional[Any] = None,
     enqueue: bool = False,
     intercept: bool = False,
-    remove_existing: bool = True,
+    remove_default: bool = True,
+    remove_existing: bool = False,
 ) -> Dict[str, int]:
     """
     Configure LoggerPlusPlus in one opt-in call (never invoked at import).
@@ -79,14 +87,23 @@ def setup(
         rotation / retention (Any | None): Forwarded to the file sink.
         enqueue (bool): Enqueue records (process-safe) on both sinks.
         intercept (bool): Also route the standard library `logging` through loguru.
-        remove_existing (bool): Remove existing sinks first (default True).
+        remove_default (bool): Remove loguru's default handler (its stderr sink) first, so
+            it does not duplicate the console sink. Leaves any sinks the app already added
+            untouched (default True).
+        remove_existing (bool): Remove ALL existing sinks first — a full clean slate. This
+            also drops sinks the application configured, so it is off by default.
 
     Returns:
         dict[str, int]: Sink ids, e.g. {"console": 1} or {"console": 1, "file": 2}.
     """
-    # 1. Optionally clear existing sinks (e.g. loguru's default handler).
+    # 1. Clear sinks: everything on request, otherwise just loguru's default handler (id 0).
     if remove_existing:
         _loguru_logger.remove()
+    elif remove_default:
+        try:
+            _loguru_logger.remove(0)
+        except ValueError:
+            pass  # the default handler was already removed
 
     # 2. Console sink with the resolved (colorized-tag) format.
     console = sys.stderr if sink is None else sink
@@ -138,12 +155,17 @@ def configure_from_env(prefix: str = "LOGGING_LPP_") -> Dict[str, int]:
     env = os.environ
     kwargs: Dict[str, Any] = {}
 
-    # 1. String-valued options (only override when present).
+    # 1. Level options: an all-digit string is a numeric level (env values are always
+    #    strings, so coerce it to int; loguru rejects a numeric level given as a string).
+    for env_key, arg in (("LEVEL", "level"), ("FILE_LEVEL", "file_level")):
+        value = env.get(prefix + env_key)
+        if value:
+            kwargs[arg] = int(value) if value.isdigit() else value
+
+    # 2. Other string-valued options (only override when non-empty).
     for env_key, arg in (
-        ("LEVEL", "level"),
         ("FORMAT", "format"),
         ("FILE", "file"),
-        ("FILE_LEVEL", "file_level"),
         ("ROTATION", "rotation"),
         ("RETENTION", "retention"),
     ):
@@ -151,14 +173,14 @@ def configure_from_env(prefix: str = "LOGGING_LPP_") -> Dict[str, int]:
         if value:
             kwargs[arg] = value
 
-    # 2. Boolean-valued options.
+    # 3. Boolean-valued options (an empty string is ignored, keeping the default).
     for env_key, arg in (
         ("COLORIZE", "colorize"),
         ("ENQUEUE", "enqueue"),
         ("INTERCEPT", "intercept"),
     ):
         value = env.get(prefix + env_key)
-        if value is not None:
+        if value:
             kwargs[arg] = _env_bool(value)
 
     return setup(**kwargs)

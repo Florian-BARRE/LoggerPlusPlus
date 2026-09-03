@@ -6,6 +6,11 @@
 # Logging is emitted lazily and defensively: building a message (including argument
 # reprs) happens only when the record will be emitted, and a logging failure can never
 # propagate into — or abort — the decorated function.
+# log_timing/log_io transparently support sync functions, `async def` coroutines, and
+# async generators (only a real `async def`/`async def ... yield` gets the awaiting
+# wrapper — a plain function that merely returns a coroutine cannot be detected).
+# Control-flow BaseExceptions (cancellation, KeyboardInterrupt, ...) are re-raised without
+# being logged as a failure.
 
 from __future__ import annotations
 
@@ -203,8 +208,26 @@ def _make_decorator(
         # 1. Resolve the effective logger once, at decoration time.
         log = _select_logger(logger=logger, identifier=identifier)
 
-        # 2. Async functions need an awaiting wrapper so timing/return reflect the actual
-        #    coroutine execution, not the creation of the coroutine object.
+        # 2. Async generators: wrap so timing spans the full consumption and errors raised
+        #    while iterating still reach on_error (there is no single return value).
+        if inspect.isasyncgenfunction(func):
+
+            @functools.wraps(func)
+            async def async_gen_wrapper(*args: Any, **kwargs: Any) -> Any:
+                state = on_enter(log, func, args, kwargs)
+                try:
+                    async for item in func(*args, **kwargs):
+                        yield item
+                except BaseException as exc:
+                    if on_error is not None and isinstance(exc, Exception):
+                        on_error(log, func, args, kwargs, exc, state)
+                    raise
+                on_exit(log, func, args, kwargs, None, state)
+
+            return async_gen_wrapper
+
+        # 3. Coroutine functions need an awaiting wrapper so timing/return reflect the
+        #    actual execution, not the creation of the coroutine object.
         if inspect.iscoroutinefunction(func):
 
             @functools.wraps(func)
@@ -213,7 +236,7 @@ def _make_decorator(
                 try:
                     result = await func(*args, **kwargs)
                 except BaseException as exc:
-                    if on_error is not None:
+                    if on_error is not None and isinstance(exc, Exception):
                         on_error(log, func, args, kwargs, exc, state)
                     raise
                 on_exit(log, func, args, kwargs, result, state)
@@ -223,12 +246,14 @@ def _make_decorator(
 
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> R:
-            # 2b. Enter hook, then call; on failure run on_error and re-raise, else on_exit.
+            # 4. Enter hook, then call; on a real error run on_error and re-raise, else
+            #    on_exit. Control-flow BaseExceptions (cancellation, KeyboardInterrupt,
+            #    SystemExit, GeneratorExit) propagate without being logged as a failure.
             state = on_enter(log, func, args, kwargs)
             try:
                 result: R = func(*args, **kwargs)
             except BaseException as exc:
-                if on_error is not None:
+                if on_error is not None and isinstance(exc, Exception):
                     on_error(log, func, args, kwargs, exc, state)
                 raise
             on_exit(log, func, args, kwargs, result, state)

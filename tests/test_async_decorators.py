@@ -91,3 +91,71 @@ def test_decorated_async_stays_a_coroutine_function() -> None:
         return 1
 
     assert asyncio.iscoroutinefunction(w)
+
+
+async def _consume(agen: Any) -> List[Any]:
+    """Drain an async generator into a list."""
+    return [item async for item in agen]
+
+
+def test_log_io_async_generator_still_yields(cap: List[str]) -> None:
+    """log_io on an async generator yields all items and does not log the generator object."""
+
+    @log_io()
+    async def gen(n: int) -> Any:
+        for i in range(n):
+            await asyncio.sleep(0)
+            yield i
+
+    items = asyncio.run(_consume(gen(3)))
+    assert items == [0, 1, 2]
+    text = "".join(cap)
+    assert "Calling gen" in text
+    assert "async_generator" not in text
+
+
+def test_log_timing_async_generator_times_consumption(cap: List[str]) -> None:
+    """log_timing on an async generator times the full consumption, not ~0."""
+
+    @log_timing(show_enter=False)
+    async def gen() -> Any:
+        for _ in range(2):
+            await asyncio.sleep(0.01)
+            yield 1
+
+    asyncio.run(_consume(gen()))
+    text = "".join(cap)
+    assert "Finished gen" in text
+    assert "in 0.000s" not in text
+
+
+def test_async_generator_error_reaches_on_error(cap: List[str]) -> None:
+    """An exception raised while iterating an async generator reaches on_error."""
+
+    @log_timing(show_enter=False)
+    async def gen() -> Any:
+        yield 1
+        raise ValueError("gen boom")
+
+    with pytest.raises(ValueError):
+        asyncio.run(_consume(gen()))
+    assert "Failed gen" in "".join(cap)
+
+
+def test_cancellation_is_not_logged_as_failure(cap: List[str]) -> None:
+    """A cancelled coroutine re-raises CancelledError without a 'Failed' log."""
+
+    @log_timing(show_enter=False)
+    async def slow() -> int:
+        await asyncio.sleep(10)
+        return 1
+
+    async def run() -> None:
+        task = asyncio.ensure_future(slow())
+        await asyncio.sleep(0.01)
+        task.cancel()
+        await task
+
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(run())
+    assert "Failed" not in "".join(cap)
