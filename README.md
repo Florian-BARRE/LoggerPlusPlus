@@ -147,6 +147,8 @@ loggerplusplus.add(sink=sys.stdout, format=getattr(formats, chosen, formats.Debu
 | `OpsFormat`     | time, level, identifier, process/thread, message                    |
 | `DebugFormat`   | time, level, identifier, process/thread, source `name:line`, message|
 | `MinimalFormat` | identifier, message                                                 |
+| `PlainFormat`   | Short layout, uncolored by default — for file sinks                 |
+| `FileFormat`    | Classic layout with `name:line`, uncolored by default — for file sinks |
 
 Every format accepts overrides such as `colorized=False` (plain output for file sinks) and
 per-field widths (`level_width=`, `identifier_width=`, ...). See [`docs/FORMATS.md`](docs/FORMATS.md).
@@ -213,7 +215,7 @@ from loggerplusplus import (
     logger,           # alias of the singleton
     LoggerPlusPlus,   # the proxy class
     LoggerClass,      # mixin providing self.logger
-    formats,          # ClassicFormat, ShortFormat, OpsFormat, DebugFormat, MinimalFormat
+    formats,          # ClassicFormat, ShortFormat, OpsFormat, DebugFormat, MinimalFormat, PlainFormat, FileFormat
     add, remove,      # sink management
     catch, opt,       # loguru helpers with identifier binding
     log_timing, log_io,  # timing / I/O decorators
@@ -251,7 +253,12 @@ src/loggerplusplus/
 ├── registry.py        thread-safe max-observed width
 ├── logger_class.py    LoggerClass mixin
 ├── decorators.py      catch · opt · log_timing · log_io
-└── formats/           BaseFormat + Classic · Short · Ops · Debug · Minimal
+├── context.py         bind_context · new_id · otel_context (correlation, optional OTel)
+├── structured.py      add_json — structured/JSON sink
+├── intercept.py       intercept_std_logging · InterceptHandler (stdlib bridge)
+├── bootstrap.py       setup · configure_from_env
+├── width.py           registry controls · testing.py — capture helper
+└── formats/           BaseFormat + Classic · Short · Ops · Debug · Minimal · Plain · File; Theme
 ```
 
 ---
