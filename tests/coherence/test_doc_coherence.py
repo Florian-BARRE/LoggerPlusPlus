@@ -25,11 +25,13 @@ _REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 _PATH_REF = re.compile(r"`((?:src|tests|docs|examples|test_module)/[A-Za-z0-9_.\-/]+)`")
 
 # Public names deliberately not documented in README/docs, each WITH A REASON.
-_UNDOCUMENTED_NAMES: frozenset[str] = frozenset({
-    "__version__",  # metadata, not an API name
-    "logger",       # documented as the `loggerplusplus` singleton it aliases
-    "LoggerPlusPlus",  # the proxy class; README documents the `loggerplusplus` singleton instance
-})
+_UNDOCUMENTED_NAMES: frozenset[str] = frozenset(
+    {
+        "__version__",  # metadata, not an API name
+        "logger",  # documented as the `loggerplusplus` singleton it aliases
+        "LoggerPlusPlus",  # the proxy class; README documents the `loggerplusplus` singleton instance
+    }
+)
 
 _UNDOCUMENTED_FORMATS: frozenset[str] = frozenset()  # add ONLY with a reason
 
@@ -82,11 +84,13 @@ def test_every_public_format_is_documented() -> None:
     """Every concrete format class (resolved BY NAME downstream) appears in the docs corpus."""
     corpus = _doc_corpus()
     concrete = [
-        name for name in lpp_formats.__all__
+        name
+        for name in lpp_formats.__all__
         if name.endswith("Format") and name != "BaseFormat"
     ]
     missing = sorted(
-        name for name in concrete
+        name
+        for name in concrete
         if name not in corpus and name not in _UNDOCUMENTED_FORMATS
     )
     assert not missing, (
@@ -100,7 +104,8 @@ def test_every_public_name_is_documented() -> None:
     """Every exported name in loggerplusplus.__all__ appears literally in the docs corpus."""
     corpus = _doc_corpus()
     missing = sorted(
-        name for name in loggerplusplus.__all__
+        name
+        for name in loggerplusplus.__all__
         if name not in corpus and name not in _UNDOCUMENTED_NAMES
     )
     assert not missing, (
@@ -117,4 +122,6 @@ def test_every_public_name_is_documented() -> None:
 def test_claude_md_referenced_paths_exist() -> None:
     """A stale CLAUDE.md path misleads every future session — the src-layout drift lived here."""
     dead = _dead_refs_in(_REPO_ROOT / "CLAUDE.md")
-    assert not dead, f"CLAUDE.md references dead repo path(s) — fix the Structure tree: {dead}"
+    assert (
+        not dead
+    ), f"CLAUDE.md references dead repo path(s) — fix the Structure tree: {dead}"
