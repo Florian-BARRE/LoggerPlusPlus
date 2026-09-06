@@ -1,6 +1,6 @@
 # Runtime dependencies, pinned for reproducibility. Mirrors [project.dependencies] in
-# pyproject.toml (which uses floors). Build backends (setuptools/wheel) live in [build-system],
-# not here. The canonical, fully-resolved lock is uv.lock — this file is the pip-friendly mirror.
+# pyproject.toml (which uses floors). The build backend (poetry-core) lives in [build-system],
+# not here. The canonical, fully-resolved lock is poetry.lock — this file is the pip-friendly mirror.
 colorama==0.4.6
 loguru==0.7.3
 win32_setctime==1.2.0; sys_platform == "win32"

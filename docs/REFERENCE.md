@@ -73,6 +73,33 @@ log_io(*, logger=None, identifier=None, level="DEBUG",
 ```
 Decorator that logs arguments and/or the return value.
 
+### Correlation context, structured output, setup & registry (1.1.0)
+
+```python
+bind_context(**fields)          # bind correlation fields onto the context for the enclosing scope
+new_id()                        # generate a fresh correlation id
+otel_context()                  # bridge the active OpenTelemetry span/trace ids into the context
+add_json(sink, *, level="DEBUG", filter=None, **kwargs)   # structured/JSON sink
+SENSITIVE_KEYS                  # the set of field names redacted by add_json
+setup(...)                      # one-call configuration of the default sinks
+configure_from_env()            # configure from LOGGING_LPP_* environment variables
+intercept_std_logging(level=0)  # route the standard library `logging` through loggerplusplus
+InterceptHandler                # the `logging.Handler` subclass that intercept_std_logging installs
+```
+
+Auto-width registry controls:
+
+```python
+register_identifier(identifier)   # pre-seed an identifier's observed width for early alignment
+reset_widths()                    # clear all observed widths (mainly for tests)
+observed_widths()                 # snapshot of the current per-field observed widths
+set_max_auto_width(field, width)  # cap the auto width of a field
+import_widths(mapping)            # seed observed widths from a saved mapping
+```
+
+Themes: `Theme` is the color palette used by the colorized formats; `DEFAULT_THEME` is the
+built-in instance. See [FORMATS.md](FORMATS.md).
+
 ### LoggerClass
 
 ```python
