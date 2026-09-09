@@ -43,7 +43,7 @@ packages = [{ include = "loggerplusplus", from = "src" }]
 [tool.poetry.group.dev.dependencies]
 # pytest + pytest-cov must install on the 3.9 test job, so they stay on 3.9-compatible majors.
 pytest = "^8.3"
-pytest-cov = "^6.0"
+pytest-cov = "^7.1"
 hypothesis = "^6.0"
 ruff = "^0.16"
 # Lint-only tools run on the 3.11 `lint` job; newest majors dropped 3.9, so gate them to >=3.10
