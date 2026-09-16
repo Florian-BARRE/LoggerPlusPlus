@@ -27,7 +27,7 @@ from .transforms import Banner
 # --------------------- Version --------------------- #
 # Single source of truth for the runtime version; kept in sync with pyproject.toml
 # by release-please (see release-please-config.json `extra-files`).
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 # `logger` is the ENHANCED, ready-to-use singleton (drop-in for loguru's `logger`),
 # so `from loggerplusplus import logger` gets the overridden add/catch/opt/... .
