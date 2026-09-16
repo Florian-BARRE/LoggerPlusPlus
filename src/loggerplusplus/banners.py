@@ -55,8 +55,10 @@ class Banner:
 
         def _render(text: str) -> str:
             # Trailing newlines are re-added at emission time (raw mode); strip them here.
+            # pyfiglet is untyped (renderText returns Any), so pin the result to str.
             figlet_cls = _require_figlet()
-            return figlet_cls(font=font).renderText(text).rstrip("\n")
+            rendered: str = str(figlet_cls(font=font).renderText(text))
+            return rendered.rstrip("\n")
 
         return _render
 

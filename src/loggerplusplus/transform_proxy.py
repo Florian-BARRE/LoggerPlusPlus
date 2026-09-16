@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple
 
 __all__: list[str] = ["emit_with_transform", "TransformProxy", "LEVEL_METHODS"]
 
@@ -41,7 +41,7 @@ _CALLER_DEPTH: int = 2
 
 
 def emit_with_transform(
-    core: Any, name: str, args: Tuple[Any, ...], kwargs: dict
+    core: Any, name: str, args: Tuple[Any, ...], kwargs: Dict[str, Any]
 ) -> Any:
     """
     Apply an optional `transform` to a level method's message, then emit via loguru.

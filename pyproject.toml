@@ -89,7 +89,7 @@ python_version = "3.10"
 strict = true
 
 [[tool.mypy.overrides]]
-module = ["loguru.*", "opentelemetry.*"]
+module = ["loguru.*", "opentelemetry.*", "pyfiglet.*"]
 ignore_missing_imports = true
 
 # BaseFormat deliberately subclasses `str` (so a format instance IS a format string), which makes
