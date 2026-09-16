@@ -13,6 +13,7 @@ from loguru import logger as _core
 
 from .api import add
 from .decorators import catch, log_io, log_timing, opt
+from .transform_proxy import LEVEL_METHODS, TransformProxy, emit_with_transform
 
 # Method names intercepted by the proxy, mapped to their project override. Hoisted to a
 # module-level constant so `__getattr__` reads it instead of rebuilding the dict on every
@@ -25,6 +26,11 @@ _OVERRIDES: dict[str, Callable[..., Any]] = {
     "log_timing": log_timing,
 }
 
+# Logger-returning methods whose result is wrapped in a `TransformProxy`, so a logger obtained
+# via `loggerplusplus.bind(...)`/`.patch(...)` keeps the `transform=`/`raw=` keyword on its own
+# level methods. `opt` is NOT wrapped here: it is a project override (see `_OVERRIDES`).
+_WRAP_RETURNING: frozenset[str] = frozenset({"bind", "patch"})
+
 
 class LoggerPlusPlus:
     """
@@ -34,6 +40,9 @@ class LoggerPlusPlus:
       - By default, `__getattr__` forwards attributes and methods to the loguru logger.
       - Certain method names (`'add'`, `'catch'`, `'opt'`, `'log_io'`, `'log_timing'`)
         are overridden with custom implementations provided by this project.
+      - Level methods (`.info`, `.debug`, ...) accept two extra keywords, `transform`
+        (a `str -> str` applied to the message) and `raw` (emit without the level prefix);
+        `.bind`/`.patch` return a `TransformProxy` so a bound logger keeps them.
       - Overrides maintain simple `*args`/`**kwargs` signatures, avoiding duplication
         of upstream signatures.
 
@@ -74,10 +83,21 @@ class LoggerPlusPlus:
         Returns:
             Any: The resolved attribute, either an override or from the core logger.
         """
+        # 1. Project overrides (add/catch/opt/log_io/log_timing) win.
         override = _OVERRIDES.get(name)
         if override is not None:
             return override
-        return getattr(self._core, name)
+
+        # 2. Level methods gain the `transform=`/`raw=` keyword, applied against the core logger.
+        if name in LEVEL_METHODS:
+            core = self._core
+            return lambda *a, **k: emit_with_transform(core, name, a, k)
+
+        # 3. `bind`/`patch` return a wrapped logger so the keyword survives on the bound logger.
+        attr = getattr(self._core, name)
+        if name in _WRAP_RETURNING and callable(attr):
+            return lambda *a, **k: TransformProxy(attr(*a, **k))
+        return attr
 
     def __dir__(self) -> list[str]:
         """

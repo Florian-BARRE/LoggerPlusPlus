@@ -32,6 +32,12 @@ dependencies = [
     'win32-setctime>=1.2.0; sys_platform == "win32"',
 ]
 
+# Optional extras. `banners` powers Banner.figlet (big ASCII art); the box/rule banners and the
+# transform mechanism itself stay zero-dependency. Optional deps are NOT mirrored into
+# requirements.txt (that mirrors the runtime deps above only).
+[project.optional-dependencies]
+banners = ["pyfiglet>=1.0.4,<2.0"]
+
 [project.urls]
 Homepage = "https://github.com/Florian-BARRE/LoggerPlusPlus"
 Repository = "https://github.com/Florian-BARRE/LoggerPlusPlus"

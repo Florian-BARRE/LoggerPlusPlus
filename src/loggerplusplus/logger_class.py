@@ -10,6 +10,7 @@ from typing import Optional
 from loguru import logger as _loguru_logger
 
 from .registry import register_identifier
+from .transform_proxy import TransformProxy
 
 # ------------------- Public API ------------------- #
 __all__ = ["LoggerClass"]
@@ -27,7 +28,9 @@ class LoggerClass:
                 self.logger.info("Service started")
 
     Attributes:
-        logger: A loguru logger instance bound with an `identifier`.
+        logger: A transform-aware proxy over a loguru logger bound with an `identifier`.
+            It forwards every loguru method unchanged, and additionally accepts the
+            `transform=`/`raw=` keywords on its level methods (`.info`, `.debug`, ...).
     """
 
     def __init__(
@@ -51,5 +54,6 @@ class LoggerClass:
         # 2. Register identifier in global registry
         register_identifier(ident)
 
-        # 3. Bind logger with identifier and attach to instance
-        self.logger = _loguru_logger.bind(identifier=ident)
+        # 3. Bind logger with identifier and attach to instance, wrapped so the bound logger
+        #    also accepts the transform=/raw= keywords on its level methods.
+        self.logger = TransformProxy(_loguru_logger.bind(identifier=ident))

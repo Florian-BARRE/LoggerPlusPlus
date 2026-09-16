@@ -3,7 +3,7 @@ from __future__ import annotations
 from loguru import logger as _loguru_logger
 
 # --------------------- Submodules --------------------- #
-from . import formats
+from . import formats, transforms
 
 # --------------------- Enhanced API --------------------- #
 from .api import add
@@ -22,6 +22,7 @@ from .registry import (
     set_max_auto_width,
 )
 from .structured import add_json
+from .transforms import Banner
 
 # --------------------- Version --------------------- #
 # Single source of truth for the runtime version; kept in sync with pyproject.toml
@@ -45,6 +46,8 @@ __all__ = [
     "formats",  # formats submodule (resolved by name downstream)
     "Theme",  # color theme for the formats
     "DEFAULT_THEME",
+    "transforms",  # message-transform toolkit submodule
+    "Banner",  # banner transform factories (figlet / box / rule / preset)
     # Functional API (also available as methods on the singleton)
     "add",
     "remove",

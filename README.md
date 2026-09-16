@@ -48,7 +48,11 @@ pip install loggerplusplus
 poetry add loggerplusplus
 ```
 
-Requires Python 3.9+.
+Requires Python 3.9+. Big ASCII-art banners (`Banner.figlet`) need the optional extra:
+
+```bash
+pip install 'loggerplusplus[banners]'   # adds pyfiglet; box/rule banners work without it
+```
 
 ---
 
@@ -192,6 +196,29 @@ def compute(a, b):
 
 ---
 
+## Banners & message transforms
+
+Every level method takes an optional `transform` (any `str -> str`) applied to the message before
+it is emitted, and an optional `raw` (emit without the timestamp/level prefix). `Banner` bundles
+ready-made transforms — big ASCII art, Unicode boxes, rules — and `transforms` exposes the general
+concept.
+
+```python
+from loggerplusplus import logger, Banner, transforms
+
+logger.info("Config loaded", transform=Banner.box())          # zero-dependency Unicode box
+logger.info("SECTION", transform=Banner.rule())               # ──────── SECTION ────────
+logger.info("DEPLOY", transform=Banner.figlet(font="slant"), raw=True)   # big art (extra)
+logger.info("{user} in", user="alice", transform=str.upper)   # ALICE IN — any str->str works
+logger.warning("done", transform=transforms.chain(str.upper, Banner.box(double=True)))
+```
+
+`Banner.figlet` needs the `banners` extra; `Banner.box`/`Banner.rule` and the transform mechanism
+itself are dependency-free. The keywords work on the singleton, on `bind()` loggers and on
+`LoggerClass.logger` alike. See [`docs/USAGE.md`](docs/USAGE.md).
+
+---
+
 ## Architecture
 
 ```text
@@ -219,9 +246,14 @@ from loggerplusplus import (
     add, remove,      # sink management
     catch, opt,       # loguru helpers with identifier binding
     log_timing, log_io,  # timing / I/O decorators
+    Banner,           # banner transform factories: figlet / box / rule / preset
+    transforms,       # message-transform toolkit (Transform, chain, indent, upper, lower)
     __version__,
 )
 ```
+
+Level methods also accept `transform=` (a `str -> str`) and `raw=` keywords — see
+[Banners & message transforms](#banners--message-transforms).
 
 The public surface is a stability contract: names are added, never renamed or removed without a
 major version bump. Full signatures in [`docs/REFERENCE.md`](docs/REFERENCE.md).
@@ -253,6 +285,9 @@ src/loggerplusplus/
 ├── registry.py        thread-safe max-observed width
 ├── logger_class.py    LoggerClass mixin
 ├── decorators.py      catch · opt · log_timing · log_io
+├── transform_proxy.py transform=/raw= keyword on level methods · TransformProxy
+├── transforms.py      Transform concept · chain/indent/upper/lower · re-exports Banner
+├── banners.py         Banner — figlet / box / rule / preset transform factories
 ├── context.py         bind_context · new_id · otel_context (correlation, optional OTel)
 ├── structured.py      add_json — structured/JSON sink
 ├── intercept.py       intercept_std_logging · InterceptHandler (stdlib bridge)
