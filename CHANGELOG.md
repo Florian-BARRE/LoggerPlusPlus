@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/Florian-BARRE/LoggerPlusPlus/compare/loggerplusplus-v1.1.0...loggerplusplus-v1.2.0) (2026-09-16)
+
+
+### Features
+
+* message transforms and native banners ([#7](https://github.com/Florian-BARRE/LoggerPlusPlus/issues/7)) ([130b028](https://github.com/Florian-BARRE/LoggerPlusPlus/commit/130b028c720c18c36034be863d778b7b786e200c))
+
 ## [1.1.0](https://github.com/Florian-BARRE/LoggerPlusPlus/compare/loggerplusplus-v1.0.5...loggerplusplus-v1.1.0) (2026-09-03)
 
 
