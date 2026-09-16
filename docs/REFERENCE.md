@@ -100,6 +100,50 @@ import_widths(mapping)            # seed observed widths from a saved mapping
 Themes: `Theme` is the color palette used by the colorized formats; `DEFAULT_THEME` is the
 built-in instance. See [FORMATS.md](FORMATS.md).
 
+### Message transforms & banners (1.2.0)
+
+Every level method (`.info`, `.debug`, `.success`, `.warning`, `.error`, `.critical`, `.trace`,
+`.exception`, `.log`) accepts two extra keywords:
+
+```python
+logger.info(message, transform=Callable[[str], str], raw=bool)
+```
+
+- `transform` — a `str -> str` applied to the message **after** Loguru-style substitution
+  (`logger.info("{n} items", n=3, transform=str.upper)` emits `3 ITEMS`).
+- `raw` — when `True`, emit through Loguru's `opt(raw=True)` (no timestamp/level prefix, a trailing
+  newline is ensured) — the clean path for multi-line ASCII-art banners.
+
+`transform` and `raw` are **reserved** level-method keywords: a message that uses `{transform}` or
+`{raw}` as a *named format field* cannot pass that value as a keyword argument (it would be consumed
+here instead of substituted). Use a positional `{}` or a different field name in that rare case.
+
+The keywords work the same on the `loggerplusplus` singleton, on `loggerplusplus.bind(...)` /
+`LoggerClass.logger`, and survive `.bind()`/`.patch()` chaining. `logger.opt(...)` stays exactly
+Loguru's, so `logger.opt(colors=True).info(...)` is unchanged.
+
+`transforms` submodule — the generalised concept:
+
+```python
+transforms.Transform                 # the type alias: Callable[[str], str]
+transforms.chain(*fns)               # compose transforms left-to-right
+transforms.indent(prefix="    ")     # prefix every line
+transforms.upper(text) / transforms.lower(text)
+```
+
+`Banner` — factories that each RETURN a transform:
+
+```python
+Banner.figlet(font="standard")       # big ASCII art — needs the optional `banners` extra
+Banner.box(align="center", width=None, double=False)   # zero-dep Unicode box
+Banner.rule(char="─", width=60, label=None)            # zero-dep separator line
+Banner.preset(name)                  # "title" | "big" | "small" | "box" | "double" | "line"
+```
+
+`Banner.figlet` imports `pyfiglet` lazily; without `pip install 'loggerplusplus[banners]'` it
+raises `ImportError` with that exact hint. The box/rule renderers and the transform mechanism have
+no extra dependency.
+
 ### LoggerClass
 
 ```python
@@ -157,4 +201,7 @@ Each format is a `BaseFormat` subclass. Instantiating it runs `format(**override
 | `registry.py`     | thread-safe max-observed width registry                     |
 | `logger_class.py` | `LoggerClass` mixin                                         |
 | `decorators.py`   | `catch`, `opt`, `log_timing`, `log_io`                      |
+| `transform_proxy.py` | the `transform=`/`raw=` keyword and the `TransformProxy` wrapper |
+| `transforms.py`   | the `Transform` concept, composable helpers, re-exports `Banner` |
+| `banners.py`      | `Banner` — figlet / box / rule / preset transform factories |
 | `formats/`        | `BaseFormat` and the five concrete formats                  |

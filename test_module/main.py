@@ -1,7 +1,7 @@
 import multiprocessing
 import threading
 
-from loggerplusplus import loggerplusplus
+from loggerplusplus import Banner, loggerplusplus
 from test_module import decorators as D
 from test_module.config import configure_logging
 from test_module.worker import Worker, external_function
@@ -28,6 +28,14 @@ def process_target():
 
 if __name__ == "__main__":
     loggerplusplus.bind(identifier="MAIN").info("Main starting...")
+
+    # BANNERS (transform= keyword) — eyeball the rule label and the boxed, prefix-less block
+    loggerplusplus.bind(identifier="BANNER").info(
+        "Message Transforms", transform=Banner.rule(width=60)
+    )
+    loggerplusplus.bind(identifier="BANNER").info(
+        "hello banners", raw=True, transform=Banner.box(double=True)
+    )
 
     # Class usage
     w = Worker()

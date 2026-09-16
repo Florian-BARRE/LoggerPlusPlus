@@ -227,6 +227,32 @@ execution and its return value (not the coroutine object). `log_io(redact=SENSIT
 sensitive argument values; `log_io(max_value_length=n)` shortens huge args/returns; and
 `log_timing(min_duration=s)` logs only calls at least that slow (failures are always timed).
 
+## Banners & message transforms
+
+Every level method accepts a `transform` (any `Callable[[str], str]`, applied to the message after
+substitution) and a `raw` flag (emit without the timestamp/level prefix). Transforms work on the
+singleton, on `bind()` loggers and on `LoggerClass.logger`.
+
+```python
+from loggerplusplus import logger, Banner, transforms
+
+logger.info("Config loaded", transform=Banner.box())            # ┌────────────┐ …
+logger.info("SECTION", transform=Banner.rule(width=40))         # ───── SECTION ─────
+logger.info("{n} rows synced", n=1200, transform=str.upper)     # 1200 ROWS SYNCED
+
+# Big ASCII art needs the optional extra:  pip install 'loggerplusplus[banners]'
+logger.info("DEPLOY", transform=Banner.figlet(font="slant"), raw=True)
+
+# Compose your own pipeline, or reuse a named preset:
+loud_box = transforms.chain(str.upper, Banner.box(double=True))
+logger.warning("all done", transform=loud_box)
+logger.info("Welcome", transform=Banner.preset("title"))        # "title"|"big"|"small"|"box"|"double"|"line"
+```
+
+`Banner.figlet` raises `ImportError` with the install hint when pyfiglet is absent; `Banner.box`,
+`Banner.rule` and the transform mechanism are dependency-free. `logger.opt(...)` is untouched, so
+`logger.opt(colors=True).info(...)` keeps working exactly as in loguru.
+
 ## Capturing standard-library logging
 
 Third-party libraries (uvicorn, SQLAlchemy, requests, ...) usually log through the standard
