@@ -112,7 +112,9 @@ def test_raw_mode_with_transform_and_multiline(cap: Any) -> None:
 def _capture_records() -> tuple:
     """Install a record-capturing sink; return (records, sink_id)."""
     records: List[dict] = []
-    sink_id = logger.add(lambda m: records.append(m.record), format="{message}", level="DEBUG")
+    sink_id = logger.add(
+        lambda m: records.append(m.record), format="{message}", level="DEBUG"
+    )
     return records, sink_id
 
 
