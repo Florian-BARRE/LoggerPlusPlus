@@ -8,15 +8,16 @@ center's managed layer; this file holds only what is specific to this project.
 A thin, transparent proxy over [Loguru](https://github.com/Delgan/loguru), published on PyPI as
 `loggerplusplus` (GPLv3, public repository). It adds auto-aligned identifier columns, width-aware
 truncation, named colorized formats, decorators, structured JSON output, banners and message
-transforms. Runtime deps: `loguru`, `colorama` (plus the optional `banners` extra, `pyfiglet`).
+transforms. Runtime deps: `loguru`, `colorama`, `win32-setctime` (Windows only) (plus the optional `banners`
+extra, `pyfiglet`).
 The library configures no sinks at import time and never prints.
 
 ## Layout
 
 - `src/loggerplusplus/` — the package (src layout, Poetry). Public surface in
   `src/loggerplusplus/__init__.py` (`__all__`, `__version__`).
-- `src/loggerplusplus/formats/` — the named formats (`Classic`, `Short`, `Ops`, `Debug`,
-  `Minimal`, ...), resolved by name downstream.
+- `src/loggerplusplus/formats/` — the named formats (`ClassicFormat`, `ShortFormat`, `OpsFormat`,
+  `DebugFormat`, `MinimalFormat`, `FileFormat`, `PlainFormat`), resolved by name downstream.
 - `tests/` — pytest + hypothesis suite; `tests/coherence/test_doc_coherence.py` is the doc/code
   coherence ratchet.
 - `docs/` — `docs/INSTALL.md`, `docs/USAGE.md`, `docs/FORMATS.md`, `docs/REFERENCE.md`.
