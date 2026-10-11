@@ -117,7 +117,7 @@ def test_every_public_name_is_documented() -> None:
 
 @pytest.mark.skipif(
     not (_REPO_ROOT / "CLAUDE.md").exists(),
-    reason="CLAUDE.md is git-excluded (local-only); nothing to check on CI",
+    reason="CLAUDE.md absent",
 )
 def test_claude_md_referenced_paths_exist() -> None:
     """A stale CLAUDE.md path misleads every future session — the src-layout drift lived here."""
