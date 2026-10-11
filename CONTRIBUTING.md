@@ -38,7 +38,7 @@ reusable gate in [`.github/workflows/quality.yml`](.github/workflows/quality.yml
 | `lint` | `black --check` + `ruff check` + `mypy src` |
 | `test` | **Linux/macOS/Windows × Python 3.9 → 3.13** matrix: `pytest` with a 95% coverage gate |
 | `build` | `poetry build` + `twine check` + a clean-venv smoke install |
-| `secrets` | fails on tracked secret-looking files (`.env`, `.env.*`, `*.pem`, `*.key`, `.pypirc`, `credentials*.json`, … — `*.example` allowed) + `gitleaks` (pinned, sha256-checked, gitleaks default rules only: the repo's `.gitleaks.toml` / `.gitleaksignore` are ignored, so a PR cannot weaken the scan) over the pushed/PR commit range (a new branch or a force push scans the full reachable history) |
+| `secrets` | fails on tracked secret-looking files (`.env`, `.env.*`, `*.pem`, `*.key`, `.pypirc`, `credentials*.json`, … — `*.example` allowed) + `gitleaks` (pinned, sha256-checked, gitleaks default rules only: the repo's `.gitleaks.toml` / `.gitleaksignore` and inline `gitleaks:allow` comments are ignored, so a PR cannot weaken the scan) over the pushed/PR commit range (a new branch or a force push scans the full reachable history) |
 
 `all-green` aggregates `quality` + `secrets` into the single required check: a change cannot merge
 unless both are green — and the **same quality gate must pass before a release publishes**
