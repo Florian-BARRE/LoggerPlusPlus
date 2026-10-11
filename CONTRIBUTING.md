@@ -13,8 +13,8 @@ or remove an exported name (formats are resolved by name) without a major versio
 
 ```bash
 poetry install                 # install deps + the dev group (black, ruff, mypy, pytest, hypothesis)
-poetry run black src tests test_module   # auto-format
-poetry run ruff check src tests test_module   # lint
+poetry run black src/ tests/ test_module/ examples/        # auto-format
+poetry run ruff check src/ tests/ test_module/ examples/   # lint
 poetry run mypy src            # type-check
 poetry run pytest              # unit suite (100% coverage, gate is 95%)
 poetry run python -m test_module.main    # manual smoke test — read the output by eye
@@ -30,17 +30,19 @@ construct will not fail locally — so the **CI matrix is the real guard**: the 
 
 ## The CI gate
 
-Every push and PR runs the reusable gate in
-[`.github/workflows/quality.yml`](.github/workflows/quality.yml):
+Every push and PR runs [`.github/workflows/ci.yml`](.github/workflows/ci.yml), which calls the
+reusable gate in [`.github/workflows/quality.yml`](.github/workflows/quality.yml) plus a `secrets` job:
 
 | Job | What |
 |---|---|
 | `lint` | `black --check` + `ruff check` + `mypy src` |
 | `test` | **Linux/macOS/Windows × Python 3.9 → 3.13** matrix: `pytest` with a 95% coverage gate |
 | `build` | `poetry build` + `twine check` + a clean-venv smoke install |
+| `secrets` | fails on tracked secret-looking files (`.env`, `.env.*`, `*.pem`, `*.key`, `.pypirc`, `credentials*.json`, … — `*.example` allowed) + `gitleaks` (pinned, sha256-checked, gitleaks default rules only: the repo's `.gitleaks.toml` / `.gitleaksignore` and inline `gitleaks:allow` comments are ignored, so a PR cannot weaken the scan) over the pushed/PR commit range (a new branch or a force push scans the full reachable history) |
 
-A change cannot merge unless the whole gate is green — and the **same gate must pass before a
-release publishes** ([`publish.yml`](.github/workflows/publish.yml)).
+`all-green` aggregates `quality` + `secrets` into the single required check: a change cannot merge
+unless both are green — and the **same quality gate must pass before a release publishes**
+([`publish.yml`](.github/workflows/publish.yml)).
 
 ## Releasing (automated)
 
