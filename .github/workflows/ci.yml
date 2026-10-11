@@ -17,17 +17,100 @@ jobs:
   quality:
     uses: ./.github/workflows/quality.yml
 
+  secrets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      GITLEAKS_VERSION: "8.30.1"
+      GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Reject tracked secret-looking files
+        run: |
+          offenders=()
+          while IFS= read -r -d '' path; do
+            name="${path##*/}"
+            case "$name" in
+              *.example) continue ;;
+              .env|.env.*|*.pem|*.key|*.p12|*.pfx|id_rsa*|id_ed25519*|.pypirc|credentials*.json|secrets*.yml|secrets*.yaml)
+                offenders+=("$path") ;;
+            esac
+          done < <(git ls-files -z)
+          if [ "${#offenders[@]}" -gt 0 ]; then
+            echo "::error::Secret-looking files are tracked by git: ${offenders[*]}"
+            printf '  %s\n' "${offenders[@]}"
+            exit 1
+          fi
+          echo "No secret-looking files tracked."
+
+      - name: Install gitleaks
+        run: |
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/$archive" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${archive}"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$archive" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" version
+
+      - name: Scan new commits with gitleaks
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_SHA: ${{ github.sha }}
+          # Pin the rules to gitleaks' defaults: this env var takes precedence over the tree's
+          # .gitleaks.toml, so a PR cannot weaken the scan by committing an allow-all config.
+          GITLEAKS_CONFIG_TOML: |
+            [extend]
+            useDefault = true
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            log_opts="${PR_BASE_SHA}..${PR_HEAD_SHA}"
+          elif [ -z "$PUSH_BEFORE" ] || [ "$PUSH_BEFORE" = "0000000000000000000000000000000000000000" ] \
+            || ! git cat-file -e "${PUSH_BEFORE}^{commit}" 2>/dev/null; then
+            # New branch, or the previous tip is unknown (e.g. force push): scan the full history
+            # reachable from the pushed commit.
+            log_opts="${PUSH_SHA}"
+          else
+            log_opts="${PUSH_BEFORE}..${PUSH_SHA}"
+          fi
+          echo "Scanning git log ${log_opts}"
+          # gitleaks 8.30.1 always loads <source>/.gitleaksignore, even with --gitleaks-ignore-path,
+          # so drop the tree's copy (the scan reads git history, not the worktree) and point the
+          # ignore path at a dir holding none: a PR cannot silence findings with fingerprints.
+          # --ignore-gitleaks-allow: inline `gitleaks:allow` comments cannot silence them either.
+          rm -f .gitleaksignore
+          "$RUNNER_TEMP/gitleaks" git --log-opts="${log_opts}" --gitleaks-ignore-path "$RUNNER_TEMP" \
+            --ignore-gitleaks-allow \
+            --redact --no-banner --exit-code 1 .
+
   # Single aggregated status to require in branch protection, so the required
   # check name is stable regardless of the test matrix.
   all-green:
-    needs: quality
+    needs: [ quality, secrets ]
     runs-on: ubuntu-latest
     if: always()
     steps:
-      - name: Verify quality gate passed
+      - name: Verify quality and secrets gates passed
+        env:
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          SECRETS_RESULT: ${{ needs.secrets.result }}
         run: |
-          if [ "${{ needs.quality.result }}" != "success" ]; then
-            echo "::error::Quality gate did not pass (${{ needs.quality.result }})"
-            exit 1
+          failed=0
+          if [ "$QUALITY_RESULT" != "success" ]; then
+            echo "::error::Quality gate did not pass (${QUALITY_RESULT})"
+            failed=1
           fi
-          echo "All quality checks passed."
+          if [ "$SECRETS_RESULT" != "success" ]; then
+            echo "::error::Secrets gate did not pass (${SECRETS_RESULT})"
+            failed=1
+          fi
+          [ "$failed" -eq 0 ] || exit 1
+          echo "All checks passed."
