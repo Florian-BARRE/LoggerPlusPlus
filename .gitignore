@@ -179,3 +179,6 @@ test[0-9]*.py
 
 # Poetry is the build/lock authority; uv lockfile is not used here
 uv.lock
+
+# AI Dev Kit: Claude Code's worktrees (one git checkout each), never committed
+.claude/worktrees/

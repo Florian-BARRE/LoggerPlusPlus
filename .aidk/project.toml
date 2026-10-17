@@ -1,0 +1,18 @@
+# AI Dev Kit: what aidk verify checks before a task is declared done (agents and the Stop hook).
+# Each check is the command as a list of arguments, run from the repository root, in this order.
+# The CI gate's commands (.github/workflows/quality.yml), through Poetry run by uvx (no Poetry install needed).
+
+[checks]
+deps = ["uvx", "--from", "poetry>=2,<3", "poetry", "install", "--no-interaction"]
+format = ["uvx", "--from", "poetry>=2,<3", "poetry", "run", "black", "--check", "src/", "tests/", "test_module/", "examples/"]
+lint = ["uvx", "--from", "poetry>=2,<3", "poetry", "run", "ruff", "check", "src/", "tests/", "test_module/", "examples/"]
+types = ["uvx", "--from", "poetry>=2,<3", "poetry", "run", "mypy", "src/"]
+tests = ["uvx", "--from", "poetry>=2,<3", "poetry", "run", "pytest", "--cov=loggerplusplus", "--cov-report=term-missing", "--cov-fail-under=95"]
+
+[rules]
+base = "origin/main"
+# A change to source files needs a change to test files (globs, relative to the repository).
+source = ["src/**"]
+tests = ["tests/**"]
+require_tests = true
+timeout = 900
