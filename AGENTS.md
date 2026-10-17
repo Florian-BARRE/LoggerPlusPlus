@@ -16,9 +16,8 @@ live in `.aidk/project.toml`).
 A thin, transparent proxy over [Loguru](https://github.com/Delgan/loguru), published on PyPI as
 `loggerplusplus` (GPLv3, public repository). It adds auto-aligned identifier columns, width-aware
 truncation, named colorized formats, decorators, structured JSON output, banners and message
-transforms. Runtime deps: `loguru`, `colorama`, `win32-setctime` (Windows only) (plus the optional `banners`
-extra, `pyfiglet`).
-The library configures no sinks at import time and never prints.
+transforms. Runtime deps: `loguru`, `colorama`, `win32-setctime` (Windows only), plus the optional
+`banners` extra (`pyfiglet`).
 
 ## Layout
 
@@ -26,51 +25,45 @@ The library configures no sinks at import time and never prints.
   `src/loggerplusplus/__init__.py` (`__all__`, `__version__`).
 - `src/loggerplusplus/formats/` — the named formats (`ClassicFormat`, `ShortFormat`, `OpsFormat`,
   `DebugFormat`, `MinimalFormat`, `FileFormat`, `PlainFormat`), resolved by name downstream.
-- `tests/` — pytest + hypothesis suite; `tests/coherence/test_doc_coherence.py` is the doc/code
-  coherence ratchet.
-- `docs/` — `docs/INSTALL.md`, `docs/USAGE.md`, `docs/FORMATS.md`, `docs/REFERENCE.md`.
-- `examples/` — runnable examples (exercised by `tests/test_examples.py`).
-- `test_module/` — manual smoke test (`poetry run python -m test_module.main`, read the output).
-- `.github/workflows/` — `ci.yml` calls the reusable gate `quality.yml`; `release-please.yml`,
-  `publish.yml`, `codeql.yml`.
+- `tests/` — pytest + hypothesis; `tests/coherence/test_doc_coherence.py` checks docs against code.
+- `examples/` — runnable examples, exercised by `tests/test_examples.py`.
+- `test_module/` — manual smoke test.
+- `docs/` — `docs/INSTALL.md`, `docs/USAGE.md`, `docs/FORMATS.md`, `docs/REFERENCE.md`;
+  `CONTRIBUTING.md` describes the CI jobs and the release flow.
 
-## Commands
-
-Same as the CI gate (`.github/workflows/quality.yml`):
+## Running locally
 
 ```bash
 poetry install --no-interaction
-poetry run black --check src/ tests/ test_module/ examples/
-poetry run ruff check src/ tests/ test_module/ examples/
-poetry run mypy src/
-poetry run pytest --cov=loggerplusplus --cov-report=term-missing --cov-fail-under=95
+poetry run black src/ tests/ test_module/ examples/   # auto-format
+poetry run python -m test_module.main                 # manual smoke test: read the output
 ```
 
-Auto-format with `poetry run black src/ tests/ test_module/ examples/`.
+## Invariants
 
-## Conventions and invariants
-
-<important>
-- Python 3.9 floor (`requires-python = ">=3.9,<4.0"`). CI runs Python 3.9 to 3.13 on Linux,
-  macOS and Windows; local interpreters are newer, so the matrix is the real guard. In
+- Python 3.9 floor (`requires-python = ">=3.9,<4.0"`). CI runs Python 3.9 to 3.13 on Linux, macOS
+  and Windows; local interpreters are newer, so the matrix is the real guard. In
   `src/loggerplusplus/`: no `X | Y` unions (use `Optional`/`Union`), no `match`, no `StrEnum`, no
-  `slots=True`; every module starts with `from __future__ import annotations`. Ruff and Black
-  target py39; do not enable ruff `UP`.
+  `slots=True`; every module starts with `from __future__ import annotations`. Never enable ruff
+  `UP` (it rewrites to the 3.10+ syntax).
+- The library configures no sinks at import time and never calls `print()`: that is the
+  application's job.
 - The public surface is a contract: add names freely, never rename or remove an exported name
   (formats are resolved by name) without a major version bump.
 - Every name in `loggerplusplus.__all__` and every concrete format class must appear in
-  `README.md` or `docs/*.md` (the coherence ratchet fails otherwise). Backticked repo paths in
-  README, docs and this file must exist.
+  `README.md` or `docs/*.md`, and backticked repo paths there must exist (the coherence test fails
+  otherwise).
+- Keep runtime dependencies minimal; `requirements.txt` mirrors the runtime deps of
+  `pyproject.toml` (not the extras).
+
+## Releases
+
 - Conventional Commits drive release-please (`fix:` patch, `feat:` minor, `feat!:` major).
 - The version lives in `pyproject.toml` and `src/loggerplusplus/__init__.py` (`__version__`) and is
   bumped only by release-please, never by hand.
-- Publishing: release-please tags the release and dispatches `publish.yml`, which re-runs the gate
-  and uploads to PyPI via Trusted Publishing (OIDC, protected environments). Agents never edit,
-  dispatch or run the release/publish workflows and never push tags.
-- Keep runtime dependencies minimal; `requirements.txt` mirrors the runtime deps of
-  `pyproject.toml` (not the extras).
-- Coverage gate is 95% (the suite sits near 100%); new code comes with tests.
-</important>
+- release-please tags the release and dispatches `publish.yml`, which re-runs the gate and uploads to
+  PyPI via Trusted Publishing. Agents never edit, dispatch or run `release-please.yml` or
+  `publish.yml`, and never push tags.
 
 ## Public repository caveats
 
