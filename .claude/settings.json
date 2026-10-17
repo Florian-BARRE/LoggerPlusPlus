@@ -1,0 +1,18 @@
+{
+  "agent": "lead",
+  "disableClaudeAiConnectors": true,
+  "permissions": {
+    "deny": [
+      "mcp__claude-in-chrome"
+    ]
+  },
+  "autoMemoryEnabled": false,
+  "enabledPlugins": {
+    "aidk-tools@aidk": true
+  },
+  "env": {
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
+    "CLAUDE_CODE_FORK_SUBAGENT": "0",
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "2"
+  }
+}
