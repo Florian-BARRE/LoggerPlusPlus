@@ -182,3 +182,4 @@ uv.lock
 
 # AI Dev Kit: Claude Code's worktrees (one git checkout each), never committed
 .claude/worktrees/
+.orca/
