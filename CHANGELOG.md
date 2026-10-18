@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.1](https://github.com/Florian-BARRE/LoggerPlusPlus/compare/loggerplusplus-v1.2.0...loggerplusplus-v1.2.1) (2026-10-18)
+
+
+### Documentation
+
+* **agents:** rewrite the agent texts from the project's facts ([#17](https://github.com/Florian-BARRE/LoggerPlusPlus/issues/17)) ([88f5878](https://github.com/Florian-BARRE/LoggerPlusPlus/commit/88f587850ebb4168af1e03cb2cc5f6a9a5617da4))
+* **contributing:** note that inline gitleaks:allow is ignored by the secrets job ([59a605b](https://github.com/Florian-BARRE/LoggerPlusPlus/commit/59a605ba93e39483373df995d3c6cdf82f901930))
+* **contributing:** sync local commands and CI gate with the secrets job ([997222e](https://github.com/Florian-BARRE/LoggerPlusPlus/commit/997222e0e87867c321f185d5908f49c7cdbfb502))
+* fix review findings in CLAUDE.md and CONTRIBUTING ([5a9d478](https://github.com/Florian-BARRE/LoggerPlusPlus/commit/5a9d478f6a0e1be301b26db74a1bd5a28990a1c5))
+
 ## [1.2.0](https://github.com/Florian-BARRE/LoggerPlusPlus/compare/loggerplusplus-v1.1.0...loggerplusplus-v1.2.0) (2026-09-16)
 
 
