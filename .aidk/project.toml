@@ -23,5 +23,19 @@ timeout = 900
 # The kit's git hooks (every commit and every push, whatever the agent's tool): the names of [checks]
 # run at each commit (keep them fast: a few seconds) and before each push.
 [hooks]
-pre_commit = []
-pre_push = []
+pre_commit = ["format", "lint"]    # under a second each once the Poetry env exists
+pre_push = ["types", "tests"]      # about 20 s together
+commit_format = "conventional"
+secrets = true
+
+# Never merged without Florian-BARRE: the publication pipeline, release-please and the dependencies.
+[merge]
+never_alone = [
+    ".github/workflows/**",
+    ".github/dependabot.yml",
+    "release-please-config.json",
+    ".release-please-manifest.json",
+    "pyproject.toml",
+    "poetry.lock",
+    "requirements.txt",
+]

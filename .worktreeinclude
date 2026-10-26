@@ -1,0 +1,2 @@
+# Gitignored files Orca copies from the main checkout into each new worktree (one path per line).
+# loggerplusplus needs no env file: nothing to copy.
