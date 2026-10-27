@@ -2,6 +2,9 @@
 # Each check is the command as a list of arguments, run from the repository root, in this order.
 # The CI gate's commands (.github/workflows/quality.yml), through Poetry run by uvx (no Poetry install needed).
 
+[project]
+kind = "code"    # code, docs or research: docs and research need no tests rule, their checks are optional
+
 [checks]
 deps = ["uvx", "--from", "poetry>=2,<3", "poetry", "install", "--no-interaction"]
 format = ["uvx", "--from", "poetry>=2,<3", "poetry", "run", "black", "--check", "src/", "tests/", "test_module/", "examples/"]
@@ -16,3 +19,23 @@ source = ["src/**"]
 tests = ["tests/**"]
 require_tests = true
 timeout = 900
+
+# The kit's git hooks (every commit and every push, whatever the agent's tool): the names of [checks]
+# run at each commit (keep them fast: a few seconds) and before each push.
+[hooks]
+pre_commit = ["format", "lint"]    # under a second each once the Poetry env exists
+pre_push = ["types", "tests"]      # about 20 s together
+commit_format = "conventional"
+secrets = true
+
+# Never merged without Florian-BARRE: the publication pipeline, release-please and the dependencies.
+[merge]
+never_alone = [
+    ".github/workflows/**",
+    ".github/dependabot.yml",
+    "release-please-config.json",
+    ".release-please-manifest.json",
+    "pyproject.toml",
+    "poetry.lock",
+    "requirements.txt",
+]
