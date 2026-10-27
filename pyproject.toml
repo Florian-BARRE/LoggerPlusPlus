@@ -51,11 +51,11 @@ packages = [{ include = "loggerplusplus", from = "src" }]
 pytest = "^8.3"
 pytest-cov = "^7.1"
 hypothesis = "^6.0"
-ruff = "^0.16"
+ruff = "^0.17"
 # Lint-only tools run on the 3.11 `lint` job; newest majors dropped 3.9, so gate them to >=3.10
 # (they are never needed on the 3.9 test job).
-black = { version = "^26.5", python = ">=3.10" }
-mypy = { version = "^2.3", python = ">=3.10" }
+black = { version = "^26.10", python = ">=3.10" }
+mypy = { version = "^2.4", python = ">=3.10" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
