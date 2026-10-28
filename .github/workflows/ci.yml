@@ -91,8 +91,7 @@ jobs:
             --ignore-gitleaks-allow \
             --redact --no-banner --exit-code 1 .
 
-  # Single aggregated status to require in branch protection, so the required
-  # check name is stable regardless of the test matrix.
+  # Single aggregated status with a stable name regardless of the test matrix.
   all-green:
     needs: [ quality, secrets ]
     runs-on: ubuntu-latest
