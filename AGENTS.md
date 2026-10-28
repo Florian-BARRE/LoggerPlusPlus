@@ -22,6 +22,7 @@ live in `.aidk/project.toml`).
 
 - Code, comments, commit messages and pull request text in English.
 - Commits: `type(scope): summary` (feat, fix, docs, test, refactor, chore, ci).
+- A pull request that fixes an issue says `Fixes #n` in its description.
 - No environment variables are needed: the project has no `.env` file (`.worktreeinclude` copies
   nothing). Never commit secrets or tokens.
 
