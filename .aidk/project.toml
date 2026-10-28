@@ -90,3 +90,5 @@ never_alone = [
     "poetry.lock",
     "requirements.txt",
 ]
+# The dependency bots whose requests the kit reviews without a task (their login on the forge; never_alone holds).
+bots = ["dependabot[bot]"]
