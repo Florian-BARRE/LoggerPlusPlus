@@ -10,7 +10,7 @@
   `src/loggerplusplus/__init__.py` and the importable submodules `formats`, `transforms`,
   `testing`.
 - Size: 3305 lines of Python across 27 `.py` files in `src/loggerplusplus/` (17 root modules +
-  the `formats/` sub-package of 9, plus a 0-byte `py.typed`); 32 test modules / 247 test functions
+  the `formats/` sub-package of 10, plus a 0-byte `py.typed`); 32 test modules / 247 test functions
   in `tests/`; 5 files / 200 lines in `test_module/`; 7 runnable examples in `examples/`.
 - Main problems: a flat 17-module root hides two obvious sub-architectures (auto-width engine,
   transform layer); `decorators.py` (462 lines) is the only file over the 400-line ceiling;
@@ -32,8 +32,8 @@
 - **Content**: 17 root modules — `proxy.py`, `transform_proxy.py`, `api.py`, `bootstrap.py`,
   `context.py`, `decorators.py`, `intercept.py`, `logger_class.py`, `parser.py`, `registry.py`,
   `runtime.py`, `structured.py`, `testing.py`, `transforms.py`, `banners.py`, `width.py`,
-  `__init__.py` — plus the `formats/` sub-package (9 modules: `base.py`, `theme.py`, `classic.py`,
-  `short.py`, `minimal.py`, `ops.py`, `debug.py`, `file.py`, `plain.py`). `decorators.py` (462) is
+  `__init__.py` — plus the `formats/` sub-package (10 modules: `base.py`, `theme.py`, `classic.py`,
+  `short.py`, `minimal.py`, `ops.py`, `debug.py`, `file.py`, `plain.py`, `__init__.py`). `decorators.py` (462) is
   the only file over the 400-line ceiling.
 - **Layers mixed**: the root is a flat mix of the public proxy (`proxy.py`, `api.py`), the
   auto-width engine (`parser.py` → `runtime.py` → `registry.py` → `width.py`), the transform layer
