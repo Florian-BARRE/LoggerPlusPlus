@@ -117,6 +117,7 @@ src/loggerplusplus/
 | `test_module/` (5 files / 200 lines, manual smoke, 0% coverage) | fold 2 unique behaviours (real stderr sink e2e; spawned child reconfigures+aligns) into `tests/`, then DELETE the folder | deleted | R-05 | todo |
 | `tests/` (32 modules / 247 fns) | (a) extend format golden to pin RENDERED output, not just templates; (b) consolidate splintered files + dedup the `_render`/`_run` harness & capture fixtures into conftest; (c) add hypothesis for the transforms | `tests/` reworked over the characterization net | R-06 | todo |
 | `poetry.lock`, `requirements.txt`, `[tool.poetry]` (pyproject), poetry in CI/checks/docs | the POETRY install surface | DELETED / uv: hatchling backend, committed `uv.lock`, PEP 735 `[dependency-groups]` (pytest/pytest-cov/hypothesis/ruff + black/mypy gated `python=">=3.10"`), `.gitignore` un-ignores `uv.lock` | R-07 | todo |
+| `examples/benchmark.py` (7th, NOT in frozen six) | a stable performance REFERENCE for the next campaign's optimization objective: ns/record for the per-record auto-width filter on a fixed record + format; a BASELINE recorded in a PERFORMANCE.md section or in architecture.md | same file restructured + documented; a manual reference (`python examples/benchmark.py`), kept OUT of CI | R-08 | todo |
 
 Status values: `todo`, `in progress`, `done`, `deleted` (with the reason in Decisions).
 
