@@ -13,7 +13,12 @@ from loguru import logger as _core
 
 from .api import add
 from .decorators import catch, log_io, log_timing, opt
-from .transform_proxy import LEVEL_METHODS, TransformProxy, emit_with_transform
+from .transform_proxy import (
+    LEVEL_METHODS,
+    LOGGER_RETURNING,
+    TransformProxy,
+    emit_with_transform,
+)
 
 # Method names intercepted by the proxy, mapped to their project override. Hoisted to a
 # module-level constant so `__getattr__` reads it instead of rebuilding the dict on every
@@ -25,11 +30,6 @@ _OVERRIDES: dict[str, Callable[..., Any]] = {
     "log_io": log_io,
     "log_timing": log_timing,
 }
-
-# Logger-returning methods whose result is wrapped in a `TransformProxy`, so a logger obtained
-# via `loggerplusplus.bind(...)`/`.patch(...)` keeps the `transform=`/`raw=` keyword on its own
-# level methods. `opt` is NOT wrapped here: it is a project override (see `_OVERRIDES`).
-_WRAP_RETURNING: frozenset[str] = frozenset({"bind", "patch"})
 
 
 class LoggerPlusPlus:
@@ -95,7 +95,7 @@ class LoggerPlusPlus:
 
         # 3. `bind`/`patch` return a wrapped logger so the keyword survives on the bound logger.
         attr = getattr(self._core, name)
-        if name in _WRAP_RETURNING and callable(attr):
+        if name in LOGGER_RETURNING and callable(attr):
             return lambda *a, **k: TransformProxy(attr(*a, **k))
         return attr
 
