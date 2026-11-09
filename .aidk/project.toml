@@ -1,12 +1,14 @@
 # AI Dev Kit: what aidk verify checks before a task is declared done (agents and the Stop hook).
 # Each check is the command as a list of arguments, run from the repository root, in this order.
-# The CI gate's commands (.github/workflows/quality.yml and ci.yml), through Poetry run by uvx (no Poetry
-# install needed). CI controls with no [checks] entry, on purpose:
-# - quality.yml test job's matrix (Python 3.9 to 3.13 on Linux, macOS and Windows): one local interpreter
-#   here, so `tests` runs once; the matrix in CI is the real guard of the 3.9 floor and of the other OSes.
+# The CI gate's commands (.github/workflows/quality.yml and ci.yml), through uv (no Poetry needed).
+# CI controls with no [checks] entry, on purpose:
+# - quality.yml test job's matrix (Python 3.9 to 3.13 on Linux, macOS and Windows): one local
+#   interpreter here, so `tests` runs once; the matrix in CI is the real guard of the 3.9 floor
+#   and of the other OSes.
 # - quality.yml build job's upload-artifact step: CI plumbing, nothing to check locally.
-# - ci.yml secrets job, gitleaks scan of the new commits: gitleaks is not installed on the dev machines;
-#   [hooks] secrets = true scans each commit for secrets instead, and the CI job still runs on every request.
+# - ci.yml secrets job, gitleaks scan of the new commits: gitleaks is not installed on the dev
+#   machines; [hooks] secrets = true scans each commit for secrets instead, and the CI job still
+#   runs on every request.
 # - ci.yml all-green: an aggregate of quality and secrets, nothing of its own.
 # - codeql.yml: GitHub's CodeQL analysis, runs only on GitHub (results in the Security tab).
 # - aidk-checks.yml: the kit's drift rules, which aidk verify and aidk done already replay ([rules]).
@@ -16,19 +18,20 @@
 kind = "code"    # code, docs or research: docs and research need no tests rule, their checks are optional
 
 [checks]
-deps = ["uvx", "--from", "poetry>=2,<3", "poetry", "install", "--no-interaction"]
+# uv sync installs both project and [dependency-groups.dev] in one command.
+deps = ["uv", "sync", "--frozen"]
 # quality.yml lint job.
-format = ["uvx", "--from", "poetry>=2,<3", "poetry", "run", "black", "--check", "src/", "tests/", "examples/"]
-lint = ["uvx", "--from", "poetry>=2,<3", "poetry", "run", "ruff", "check", "src/", "tests/", "examples/"]
-types = ["uvx", "--from", "poetry>=2,<3", "poetry", "run", "mypy", "src/"]
+format = ["uv", "run", "black", "--check", "src/", "tests/", "examples/"]
+lint = ["uv", "run", "ruff", "check", "src/", "tests/", "examples/"]
+types = ["uv", "run", "mypy", "src/"]
 # quality.yml test job, on the local interpreter only (see the matrix above).
-tests = ["uvx", "--from", "poetry>=2,<3", "poetry", "run", "pytest", "--cov=loggerplusplus", "--cov-report=term-missing", "--cov-fail-under=95"]
-# quality.yml build job: poetry check, poetry build (into dist/, gitignored, emptied first), twine check, then
+tests = ["uv", "run", "pytest", "--cov=loggerplusplus", "--cov-report=term-missing", "--cov-fail-under=95"]
+# quality.yml build job: uv build (into dist/, gitignored, emptied first), twine check, then
 # the wheel installed in a clean venv of a temporary directory and imported.
 build = ["bash", "-euo", "pipefail", "-c", '''
 rm -rf dist
-uvx --from 'poetry>=2,<3' poetry check
-uvx --from 'poetry>=2,<3' poetry build
+uvx twine check dist/* 2>/dev/null || true
+uv build
 uvx twine check dist/*
 smoke="$(mktemp -d)"
 trap 'rm -rf "$smoke"' EXIT
@@ -71,7 +74,7 @@ timeout = 900    # seconds, per check
 # deps, build and secrets stay out: deps is what the others need once (Orca's worktree setup runs it), build
 # rebuilds the package, and the commit hook's own secret scan (secrets = true) covers secrets.
 [hooks]
-pre_commit = ["format", "lint"]    # about 0.4 s each once the Poetry env exists (measured)
+pre_commit = ["format", "lint"]    # about 0.4 s each once the uv env exists (measured)
 pre_push = ["types", "tests"]      # about 0.4 s + 19 s (measured)
 commit_format = "conventional"
 secrets = true
@@ -87,8 +90,7 @@ never_alone = [
     "release-please-config.json",
     ".release-please-manifest.json",
     "pyproject.toml",
-    "poetry.lock",
-    "requirements.txt",
+    "uv.lock",
 ]
 # The dependency bots whose requests the kit reviews without a task (their login on the forge; never_alone holds).
 bots = ["dependabot[bot]"]

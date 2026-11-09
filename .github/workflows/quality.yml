@@ -14,16 +14,16 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.11"
-      - name: Install Poetry
-        run: pipx install poetry
+      - name: Install uv
+        run: pip install uv
       - name: Install dependencies
-        run: poetry install --no-interaction
+        run: uv sync --frozen
       - name: Black
-        run: poetry run black --check src/ tests/ examples/
+        run: uv run black --check src/ tests/ examples/
       - name: Ruff
-        run: poetry run ruff check src/ tests/ examples/
+        run: uv run ruff check src/ tests/ examples/
       - name: mypy
-        run: poetry run mypy src/
+        run: uv run mypy src/
 
   test:
     runs-on: ${{ matrix.os }}
@@ -41,12 +41,12 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install Poetry
-        run: pipx install poetry
+      - name: Install uv
+        run: pip install uv
       - name: Install dependencies
-        run: poetry install --no-interaction
+        run: uv sync --frozen
       - name: Run tests
-        run: poetry run pytest --cov=loggerplusplus --cov-report=term-missing --cov-fail-under=95
+        run: uv run pytest --cov=loggerplusplus --cov-report=term-missing --cov-fail-under=95
 
   build:
     runs-on: ubuntu-latest
@@ -55,12 +55,12 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.11"
-      - name: Install Poetry
-        run: pipx install poetry
-      - name: Validate pyproject
-        run: poetry check
+      - name: Install uv
+        run: pip install uv
+      - name: Install dependencies
+        run: uv sync --frozen
       - name: Build sdist + wheel
-        run: poetry build
+        run: uv build
       - name: Validate distribution metadata
         run: pipx run twine check dist/*
       - name: Smoke-install the wheel in a clean venv
