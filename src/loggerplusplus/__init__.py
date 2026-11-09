@@ -7,20 +7,21 @@ from . import formats, transforms
 
 # --------------------- Enhanced API --------------------- #
 from .api import add
-from .bootstrap import configure_from_env, setup
-from .context import bind_context, new_id, otel_context
-from .decorators import SENSITIVE_KEYS, catch, log_io, log_timing, opt
-from .formats import DEFAULT_THEME, Theme
-from .intercept import InterceptHandler, intercept_std_logging
-from .logger_class import LoggerClass
-from .proxy import LoggerPlusPlus, loggerplusplus
-from .registry import (
+from .auto_width.registry import (
     import_widths,
     observed_widths,
     register_identifier,
     reset_widths,
     set_max_auto_width,
 )
+from .bootstrap import configure_from_env, setup
+from .context import bind_context, new_id, otel_context
+from .decorators import catch, log_io, log_timing, opt
+from .formats import DEFAULT_THEME, Theme
+from .intercept import InterceptHandler, intercept_std_logging
+from .logger_class import LoggerClass
+from .proxy import LoggerPlusPlus, loggerplusplus
+from .redact import SENSITIVE_KEYS
 from .structured import add_json
 from .transforms import Banner
 
