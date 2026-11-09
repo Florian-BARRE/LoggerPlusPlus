@@ -268,6 +268,7 @@ major version bump. Full signatures in [`docs/REFERENCE.md`](docs/REFERENCE.md).
 | [docs/USAGE.md](docs/USAGE.md)       | Task-oriented guide: sinks, formats, decorators      |
 | [docs/FORMATS.md](docs/FORMATS.md)   | The five formats and the auto-width token grammar    |
 | [docs/REFERENCE.md](docs/REFERENCE.md) | API reference and the auto-width pipeline internals |
+| [docs/PERFORMANCE.md](docs/PERFORMANCE.md) | Performance reference: the per-record auto-width benchmark (manual) |
 | [CHANGELOG.md](CHANGELOG.md)         | Release history (maintained by release-please)       |
 | [CONTRIBUTING.md](CONTRIBUTING.md)   | Development workflow, the CI gate, and releasing     |
 

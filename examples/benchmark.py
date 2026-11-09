@@ -29,6 +29,7 @@ without updating the baseline in ``docs/PERFORMANCE.md``.
 
 from __future__ import annotations
 
+import copy
 import platform
 import timeit
 from typing import Any, Dict
@@ -47,8 +48,8 @@ N = 200_000
 
 
 def _make_record() -> Dict[str, Any]:
-    """A fresh copy of the frozen record (shallow: the filter may mutate ``extra``)."""
-    return RECORD.copy()
+    """A fresh deep copy of the frozen record (the filter may mutate ``extra``)."""
+    return copy.deepcopy(RECORD)
 
 
 def main() -> None:
@@ -66,7 +67,7 @@ def main() -> None:
     )
     print(
         "BENCHMARK: "
-        f"ns/record={per_record_ns:.0f} records={N:,} format={FORMAT} "
+        f'ns/record={per_record_ns:.0f} records={N:,} format="{FORMAT}" '
         f"platform={platform.platform()}"
     )
 

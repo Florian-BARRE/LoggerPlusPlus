@@ -11,7 +11,9 @@ from pathlib import Path
 import pytest
 
 _EXAMPLES_DIR = Path(__file__).resolve().parent.parent / "examples"
-_SCRIPTS = sorted(_EXAMPLES_DIR.glob("*.py"))
+# Only the numbered (frozen) examples are smoke-tested in CI. Non-numbered
+# scripts such as benchmark.py are manual tools, excluded on purpose.
+_SCRIPTS = sorted(p for p in _EXAMPLES_DIR.glob("*.py") if p.name[0].isdigit())
 
 
 @pytest.mark.parametrize("script", _SCRIPTS, ids=lambda p: p.name)
