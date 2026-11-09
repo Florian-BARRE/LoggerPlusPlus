@@ -105,8 +105,8 @@ src/loggerplusplus/
 | Current location | Content | Target location | Ticket | Status |
 |---|---|---|---|---|
 | `src/loggerplusplus/__init__.py` | facade + FROZEN `__all__` (30 names) | `__init__.py` (re-exports updated to new homes; `__all__` unchanged) | R-00 (layout) | todo |
-| `src/loggerplusplus/banners.py` | `Banner` toolkit | `transforms/banners.py` | R-01 | todo |
-| `src/loggerplusplus/transforms.py` | `Transform`, chain/indent/upper/lower, Banner re-export | `transforms/__init__.py` (FROZEN surface) + `transforms/helpers.py` | R-01 | todo |
+| `src/loggerplusplus/transforms/banners.py` | `Banner` toolkit | `transforms/banners.py` | R-01 | done |
+| `src/loggerplusplus/transforms/__init__.py` | `Transform`, chain/indent/upper/lower, Banner re-export | `transforms/__init__.py` (FROZEN surface) + `transforms/helpers.py` | R-01 | done |
 | `src/loggerplusplus/width.py` | visual-width engine | `auto_width/width.py` | R-02 | todo |
 | `src/loggerplusplus/parser.py` | `prepare_auto_format`, `_AutoMap` | `auto_width/parser.py` | R-02 | todo |
 | `src/loggerplusplus/runtime.py` | `compose_filter`, `_build_dict_filter` | `auto_width/filter.py` | R-02 | todo |
