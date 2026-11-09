@@ -10,7 +10,7 @@ Runnable examples for LoggerPlusPlus. Each is self-contained — run with `pytho
 | [`04_structured_json.py`](04_structured_json.py) | `add_json()` — one JSON object per record |
 | [`05_setup_and_intercept.py`](05_setup_and_intercept.py) | `setup()` + routing stdlib `logging` through loguru |
 | [`06_context.py`](06_context.py) | `bind_context()` — a shared request id across a request |
-| [`benchmark.py`](benchmark.py) | Micro-benchmark of the per-record auto-width filter |
+| [`benchmark.py`](benchmark.py) | Performance reference for the per-record auto-width filter (manual) |
 
 ```bash
 python examples/01_quickstart.py
