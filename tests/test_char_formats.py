@@ -151,14 +151,14 @@ _COLORIZED_TEMPLATES = {
 # silently). The thread name "Dummy-1" is derived from _FIXED_TID (see module note).
 _FULL_RENDER = {
     "ClassicFormat": (
-        "YYYY-MM-DD HH:mm:ss.SSS |   INFO   | [app-0001] | test_char_formats:239  | hello world\n"
+        "YYYY-MM-DD HH:mm:ss.SSS |   INFO   | [app-0001] | tests.tes…ar_formats:239  | hello world\n"
     ),
     "DebugFormat": (
         "YYYY-MM-DD HH:mm:ss.SSS |   INFO   | [app-0001] | "
-        "PID:MainProcess[4242] TID:Dummy-1[1] | test_char_formats:239  | hello world\n"
+        "PID:MainProcess[4242] TID:Dummy-1[1] | tests.tes…ar_formats:239  | hello world\n"
     ),
     "FileFormat": (
-        "YYYY-MM-DD HH:mm:ss.SSS |   INFO   | [app-0001] | test_char_formats:239  | hello world\n"
+        "YYYY-MM-DD HH:mm:ss.SSS |   INFO   | [app-0001] | tests.tes…ar_formats:239  | hello world\n"
     ),
     "MinimalFormat": "app-0001 -> hello world\n",
     "OpsFormat": (

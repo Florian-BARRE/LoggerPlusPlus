@@ -8,23 +8,13 @@ import asyncio
 from typing import Any, List
 
 import pytest
-from loguru import logger
 
 from loggerplusplus import log_io, log_timing
 
-
-@pytest.fixture
-def cap() -> Any:
-    """Capture emitted log messages to a list, then remove the sink."""
-    messages: List[str] = []
-    sink_id = logger.add(messages.append, level="DEBUG", format="{message}")
-    try:
-        yield messages
-    finally:
-        logger.remove(sink_id)
+# Shared harness: custom_cap fixture auto-imported by pytest
 
 
-def test_log_io_async_logs_awaited_result(cap: List[str]) -> None:
+def test_log_io_async_logs_awaited_result(custom_cap: List[str]) -> None:
     """log_io on a coroutine logs the awaited value, not the coroutine object."""
 
     @log_io(log_args=False)
@@ -34,12 +24,12 @@ def test_log_io_async_logs_awaited_result(cap: List[str]) -> None:
 
     result = asyncio.run(compute(21))
     assert result == 42
-    text = "".join(cap)
+    text = "".join(custom_cap)
     assert "returned 42" in text
     assert "coroutine" not in text
 
 
-def test_log_io_async_logs_args(cap: List[str]) -> None:
+def test_log_io_async_logs_args(custom_cap: List[str]) -> None:
     """log_io on a coroutine still logs the call arguments."""
 
     @log_io(log_return=False)
@@ -48,11 +38,11 @@ def test_log_io_async_logs_args(cap: List[str]) -> None:
         return "hi " + name
 
     asyncio.run(greet("bob"))
-    assert "greet" in "".join(cap)
-    assert "bob" in "".join(cap)
+    assert "greet" in "".join(custom_cap)
+    assert "bob" in "".join(custom_cap)
 
 
-def test_log_timing_async_times_execution_and_returns(cap: List[str]) -> None:
+def test_log_timing_async_times_execution_and_returns(custom_cap: List[str]) -> None:
     """log_timing on a coroutine times the awaited run and returns its value."""
 
     @log_timing(show_enter=False)
@@ -62,13 +52,13 @@ def test_log_timing_async_times_execution_and_returns(cap: List[str]) -> None:
 
     result = asyncio.run(work())
     assert result == 7
-    text = "".join(cap)
+    text = "".join(custom_cap)
     assert "Finished work" in text
     # The measured duration reflects the awaited sleep, not ~0.
     assert "in 0.000s" not in text
 
 
-def test_log_timing_async_failure_is_timed_and_reraised(cap: List[str]) -> None:
+def test_log_timing_async_failure_is_timed_and_reraised(custom_cap: List[str]) -> None:
     """A failing coroutine still logs a timed failure and re-raises."""
 
     @log_timing(show_enter=False)
@@ -78,7 +68,7 @@ def test_log_timing_async_failure_is_timed_and_reraised(cap: List[str]) -> None:
 
     with pytest.raises(ValueError):
         asyncio.run(boom())
-    text = "".join(cap)
+    text = "".join(custom_cap)
     assert "Failed boom" in text
     assert "async nope" in text
 
@@ -98,7 +88,7 @@ async def _consume(agen: Any) -> List[Any]:
     return [item async for item in agen]
 
 
-def test_log_io_async_generator_still_yields(cap: List[str]) -> None:
+def test_log_io_async_generator_still_yields(custom_cap: List[str]) -> None:
     """log_io on an async generator yields all items and does not log the generator object."""
 
     @log_io()
@@ -109,12 +99,12 @@ def test_log_io_async_generator_still_yields(cap: List[str]) -> None:
 
     items = asyncio.run(_consume(gen(3)))
     assert items == [0, 1, 2]
-    text = "".join(cap)
+    text = "".join(custom_cap)
     assert "Calling gen" in text
     assert "async_generator" not in text
 
 
-def test_log_timing_async_generator_times_consumption(cap: List[str]) -> None:
+def test_log_timing_async_generator_times_consumption(custom_cap: List[str]) -> None:
     """log_timing on an async generator times the full consumption, not ~0."""
 
     @log_timing(show_enter=False)
@@ -124,12 +114,12 @@ def test_log_timing_async_generator_times_consumption(cap: List[str]) -> None:
             yield 1
 
     asyncio.run(_consume(gen()))
-    text = "".join(cap)
+    text = "".join(custom_cap)
     assert "Finished gen" in text
     assert "in 0.000s" not in text
 
 
-def test_async_generator_error_reaches_on_error(cap: List[str]) -> None:
+def test_async_generator_error_reaches_on_error(custom_cap: List[str]) -> None:
     """An exception raised while iterating an async generator reaches on_error."""
 
     @log_timing(show_enter=False)
@@ -139,10 +129,10 @@ def test_async_generator_error_reaches_on_error(cap: List[str]) -> None:
 
     with pytest.raises(ValueError):
         asyncio.run(_consume(gen()))
-    assert "Failed gen" in "".join(cap)
+    assert "Failed gen" in "".join(custom_cap)
 
 
-def test_cancellation_is_not_logged_as_failure(cap: List[str]) -> None:
+def test_cancellation_is_not_logged_as_failure(custom_cap: List[str]) -> None:
     """A cancelled coroutine re-raises CancelledError without a 'Failed' log."""
 
     @log_timing(show_enter=False)
@@ -158,4 +148,4 @@ def test_cancellation_is_not_logged_as_failure(cap: List[str]) -> None:
 
     with pytest.raises(asyncio.CancelledError):
         asyncio.run(run())
-    assert "Failed" not in "".join(cap)
+    assert "Failed" not in "".join(custom_cap)

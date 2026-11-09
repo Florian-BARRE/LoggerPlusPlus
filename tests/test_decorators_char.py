@@ -1,28 +1,23 @@
 # ====== Code Summary ======
-# Phase-3 characterization safety net for the four public decorators
-# (catch / opt / log_timing / log_io) and the SENSITIVE_KEYS redaction of
-# loggerplusplus. It pins the CURRENT behaviour at the public boundary by
-# capturing what is actually logged through the shared `cap` fixture and
-# asserting byte-stable golden values. Time is frozen wherever a duration
-# appears so the goldens are deterministic across runs and machines.
+# Phase-3 characterization safety net for the four public decorators and the
+# SENSITIVE_KEYS redaction constant. These are byte-stable goldens (time frozen
+# wherever a duration appears) that act as regression tests.
 
 from __future__ import annotations
-
-import time
-from typing import List
 
 import pytest
 from loguru import logger
 
-from loggerplusplus import SENSITIVE_KEYS, catch, log_io, log_timing, opt
+from loggerplusplus import SENSITIVE_KEYS
+from loggerplusplus.decorators import (
+    catch,
+    log_io,
+    log_timing,
+    opt,
+)
 
-
-def _frozen_clock(monkeypatch: "pytest.MonkeyPatch", values: List[float]) -> None:
-    """Patch time.perf_counter to yield fixed values so a measured duration is
-    byte-stable (monkeypatch restores the real clock on teardown)."""
-    it = iter(values)
-    monkeypatch.setattr(time, "perf_counter", lambda: next(it))
-
+# Shared harness helpers (fixtures auto-imported by pytest):
+from tests.conftest import _frozen_clock  # noqa: F401
 
 # =======================
 #   catch

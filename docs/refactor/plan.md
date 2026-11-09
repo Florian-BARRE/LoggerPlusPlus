@@ -39,7 +39,7 @@ these green; that is its proof of no behavioural change.
 |---|---|---|
 | formats + themes | `tests/test_char_formats.py` (PR #35) | green |
 | banners | `tests/test_char_banners.py` (PR #32) | green |
-| decorators + redaction | `tests/test_char_decorators.py` (PR #33) | green |
+| decorators + redaction | `tests/test_decorators_char.py` (PR #46) | green |
 | auto-width + setup | `tests/test_char_config.py` (PR #34) | green |
 | structured JSON | `tests/test_char_structured.py` (PR #36) | green |
 
