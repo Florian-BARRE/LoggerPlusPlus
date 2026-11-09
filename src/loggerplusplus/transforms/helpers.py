@@ -1,17 +1,16 @@
 # ====== Code Summary ======
-# The generalised "transform the message string before it is emitted" concept: the `Transform`
-# type alias plus a few small, composable helpers. Banners (`Banner`) are the flagship transform
-# toolkit and are re-exported here so `transforms.Banner` and top-level `Banner` both work. A
-# transform is any `Callable[[str], str]`, so `str.upper`, a lambda, or a user function all plug
-# into the `transform=` keyword of every level method.
+# The small, composable message-transform helpers: the `Transform` type alias (any
+# `Callable[[str], str]`) plus `chain`, `indent`, `upper` and `lower`. A transform is the
+# "transform the message string before it is emitted" concept — a plain `str -> str` you hand to
+# the `transform=` keyword of every level method, so `str.upper`, a lambda or a user function all
+# plug in. `Banner` (the flagship transform toolkit) lives in the sibling `banners` module and is
+# re-exported by the package `__init__`, not here.
 
 from __future__ import annotations
 
 from typing import Callable
 
-from .banners import Banner
-
-__all__: list[str] = ["Transform", "Banner", "chain", "indent", "upper", "lower"]
+__all__: list[str] = ["Transform", "chain", "indent", "upper", "lower"]
 
 # A message transform: takes the (already-substituted) message string, returns the string to emit.
 Transform = Callable[[str], str]
