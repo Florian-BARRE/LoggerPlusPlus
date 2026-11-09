@@ -42,7 +42,6 @@ transforms. Runtime deps: `loguru`, `colorama`, `win32-setctime` (Windows only),
   `DebugFormat`, `MinimalFormat`, `FileFormat`, `PlainFormat`), resolved by name downstream.
 - `tests/` — pytest + hypothesis; `tests/coherence/test_doc_coherence.py` checks docs against code.
 - `examples/` — runnable examples, exercised by `tests/test_examples.py`.
-- `test_module/` — manual smoke test.
 - `docs/` — `docs/INSTALL.md`, `docs/USAGE.md`, `docs/FORMATS.md`, `docs/REFERENCE.md`;
   `CONTRIBUTING.md` describes the CI jobs and the release flow.
 
@@ -50,8 +49,7 @@ transforms. Runtime deps: `loguru`, `colorama`, `win32-setctime` (Windows only),
 
 ```bash
 poetry install --no-interaction
-poetry run black src/ tests/ test_module/ examples/   # auto-format
-poetry run python -m test_module.main                 # manual smoke test: read the output
+poetry run black src/ tests/ examples/   # auto-format
 ```
 
 A library: no dev server, no `[stack]`. Orca's worktree setup (`orca.yaml`) installs the Poetry env

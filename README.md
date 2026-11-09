@@ -303,8 +303,8 @@ src/loggerplusplus/
 
 ```bash
 poetry install
-poetry run black src tests test_module
-poetry run ruff check src tests test_module
+poetry run black src tests
+poetry run ruff check src tests
 poetry run mypy src
 poetry run pytest            # 100% coverage; the CI gate is 95%
 ```

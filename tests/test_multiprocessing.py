@@ -7,14 +7,21 @@
 from __future__ import annotations
 
 import multiprocessing as mp
+import re
+from pathlib import Path
 from typing import Any
 
 from loggerplusplus import (
+    add,
     import_widths,
     observed_widths,
+    register_identifier,
+    remove,
     reset_widths,
     set_max_auto_width,
 )
+from loggerplusplus import logger as lp
+from loggerplusplus.formats import ClassicFormat
 from loggerplusplus.parser import prepare_auto_format
 from loggerplusplus.registry import _AutoWidthRegistry
 from loggerplusplus.runtime import compose_filter
@@ -32,6 +39,16 @@ def _child(snapshot: dict, queue: Any) -> None:
     """Child entrypoint: import the parent's widths, then render a short value."""
     import_widths(snapshot)
     queue.put(_render_id("X"))
+
+
+def _reconfiguring_child(snapshot: dict, logfile: str, queue: Any) -> None:
+    """Child entrypoint: rebuild its own sink (sinks are process-local), then log."""
+    remove()  # a spawned child starts with no sinks; this also guards a fork-like start
+    sink_id = add(sink=logfile, format=ClassicFormat(), colorize=False)
+    import_widths(snapshot)
+    lp.bind(identifier="ab").info("from child")
+    remove(sink_id)  # flush and close the file before reading it back
+    queue.put(Path(logfile).read_text())
 
 
 def test_import_widths_merges_taking_max() -> None:
@@ -67,5 +84,34 @@ def test_import_widths_aligns_a_spawned_child() -> None:
                 proc.join(5)
         # The child padded its short "X" to the imported width of 14.
         assert out == "X" + " " * 13
+    finally:
+        reset_widths()
+
+
+def test_spawned_child_reconfigures_its_sink_and_aligns(tmp_path: Path) -> None:
+    """A spawned child adds its own real sink, imports widths, and writes an aligned line."""
+    reset_widths()
+    set_max_auto_width(None)
+    try:
+        register_identifier("LongIdentifier")  # parent column: 14 cells
+        snapshot = observed_widths()
+        assert snapshot.get("identifier") == 14
+
+        logfile = str(tmp_path / "child.log")
+        ctx = mp.get_context("spawn")
+        queue = ctx.Queue()
+        proc = ctx.Process(target=_reconfiguring_child, args=(snapshot, logfile, queue))
+        proc.start()
+        try:
+            out = queue.get(timeout=30)
+        finally:
+            proc.join(30)
+            if proc.is_alive():  # pragma: no cover - safety net for a hung child
+                proc.terminate()
+                proc.join(5)
+        # The child's own sink wrote the record, with "ab" centred in the parent's 14 cells.
+        lines = re.sub(r"\x1b\[[0-9;]*m", "", out).splitlines()
+        assert len(lines) == 1
+        assert "[      ab      ]" in lines[0] and lines[0].endswith("from child")
     finally:
         reset_widths()

@@ -13,11 +13,10 @@ or remove an exported name (formats are resolved by name) without a major versio
 
 ```bash
 poetry install                 # install deps + the dev group (black, ruff, mypy, pytest, hypothesis)
-poetry run black src/ tests/ test_module/ examples/        # auto-format
-poetry run ruff check src/ tests/ test_module/ examples/   # lint
+poetry run black src/ tests/ examples/        # auto-format
+poetry run ruff check src/ tests/ examples/   # lint
 poetry run mypy src            # type-check
 poetry run pytest              # unit suite (100% coverage, gate is 95%)
-poetry run python -m test_module.main    # manual smoke test — read the output by eye
 ```
 
 ## The Python 3.9 floor (non-negotiable)

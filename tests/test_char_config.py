@@ -17,6 +17,8 @@
 
 from __future__ import annotations
 
+import re
+import sys
 from typing import Any, List
 
 import pytest
@@ -34,6 +36,7 @@ from loggerplusplus import (
     setup,
 )
 from loggerplusplus import logger as lp
+from loggerplusplus.formats import ClassicFormat
 
 # ====== Local Test Helpers ====== #
 
@@ -205,3 +208,29 @@ def test_configure_from_env_default_has_console_only(
     cap.track(add(cap.append, format=plain, colorize=False))
     lp.bind(identifier="ENV2").info("console from env")
     assert cap.text == "ENV2 -> console from env\n"
+
+
+# ====== 6. real sys.stderr sink, end to end ====== #
+
+_ANSI = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def test_real_stderr_sink_renders_aligned_identifier_column(capfd: Any) -> None:
+    """A real `sys.stderr` sink added like a user would renders the aligned column.
+
+    `capfd` (fd-level capture), not `capsys`: loguru keeps the `sys.stderr` object it
+    saw at add-time, so only the real fd 2 receives its writes.
+    """
+    logger.remove()
+    sink_id = add(sink=sys.stderr, level="DEBUG", format=ClassicFormat())
+    try:
+        lp.bind(identifier="LongIdentifier").info("first line")
+        lp.bind(identifier="ab").debug("second line")
+    finally:
+        logger.remove(sink_id)
+    lines = _ANSI.sub("", capfd.readouterr().err).splitlines()
+    assert len(lines) == 2
+    assert "[LongIdentifier]" in lines[0] and lines[0].endswith("first line")
+    # The short identifier is centred in the 14-cell column set by the long one.
+    assert "[      ab      ]" in lines[1] and lines[1].endswith("second line")
+    assert "DEBUG" in lines[1]
