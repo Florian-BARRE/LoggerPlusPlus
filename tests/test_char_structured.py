@@ -243,18 +243,18 @@ GOLDEN_REP_KEYS = [
 GOLDEN_REP = (
     '{"time": "2020-01-02T03:04:05.123456+00:00", "level": "INFO", '
     '"identifier": "SVC", "message": "hello world", '
-    '"name": "test_char_structured", "function": "_emit_representative", '
+    '"name": "tests.test_char_structured", "function": "_emit_representative", '
     '"line": 32, "module": "test_char_structured", "process": 4242, '
     '"thread": 1, "extra": {"user": "bob"}, "exception": null}'
 )
 GOLDEN_FIELDS = '{"level": "INFO", "message": "hi"}'
 GOLDEN_NDJSON = (
     '{"time": "2020-01-02T03:04:05.123456+00:00", "level": "INFO", '
-    '"identifier": "A", "message": "first", "name": "test_char_structured", '
+    '"identifier": "A", "message": "first", "name": "tests.test_char_structured", '
     '"function": "_emit_two", "line": 36, "module": "test_char_structured", '
     '"process": 4242, "thread": 1, "extra": {}, "exception": null}'
     '{"time": "2020-01-02T03:04:05.123456+00:00", "level": "WARNING", '
-    '"identifier": "B", "message": "second", "name": "test_char_structured", '
+    '"identifier": "B", "message": "second", "name": "tests.test_char_structured", '
     '"function": "_emit_two", "line": 37, "module": "test_char_structured", '
     '"process": 4242, "thread": 1, "extra": {"user": "x"}, "exception": null}'
 )
