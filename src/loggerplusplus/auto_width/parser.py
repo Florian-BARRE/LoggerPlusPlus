@@ -1,0 +1,87 @@
+# ====== Code Summary ======
+# Token parser for "auto-width" formatting placeholders used in logging formats.
+# Rewrites custom tokens to `extra[...]` placeholders and returns metadata needed
+# at runtime to compute widths and truncation.
+
+from __future__ import annotations
+
+import re
+from typing import List, Optional, Tuple
+
+__all__: list[str] = ["prepare_auto_format"]
+
+# Canonical shape of a parsed auto-width token, shared with runtime.py:
+#   (field, placeholder_key, align, width_spec, cap, trunc)
+_AutoMap = Tuple[str, str, str, str, Optional[int], Optional[str]]
+
+# Supported examples:
+#   {identifier:<auto}
+#   {identifier:<auto[18~middle]}
+#   {level.name:^15[10~right]}
+#   {extra[service]:>auto[12~left]}
+#
+# Notes on the two guards below:
+#   - `(?<!\{)` / `(?!\})` keep the token from matching inside a doubled-brace escape
+#     (`{{identifier:<auto}}`), which Python/loguru render as a literal `{...}` — matching
+#     there would leak a raw placeholder into the output.
+#   - `\s*` after the colon tolerates an incidental space in the spec (`{identifier: <auto}`);
+#     without it the token silently fails to match, reaches loguru unrewritten, and raises
+#     KeyError on every log call because `identifier` is not a top-level record field.
+_TOKEN_RE: re.Pattern[str] = re.compile(
+    r"(?<!\{)\{"
+    r"(?P<field>(?:extra\[[^\]]+\]|[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*))"
+    r":\s*"
+    r"(?P<align>[<>\^])?"
+    r"(?P<width>auto|\d+)"
+    r"(?:\[(?P<cap>\d+)(?:~(?P<trunc_in>left|right|middle))?\])?"
+    r"(?:~(?P<trunc_out>left|right|middle))?"
+    r"\}(?!\})",
+    flags=re.UNICODE,
+)
+
+
+def prepare_auto_format(fmt: str) -> Tuple[str, List[_AutoMap]]:
+    """
+    Replace custom auto-width tokens with `extra` placeholders and capture metadata.
+
+    The function scans `fmt` for tokens matching `_TOKEN_RE` (see "Supported examples"
+    above), replaces each with a unique `{extra[__lp_auto_i__]}` placeholder, and
+    returns both the rewritten format string and a list of mappings used later at
+    runtime to compute widths and truncation behavior.
+
+    Args:
+        fmt (str): The original format string containing auto-width tokens.
+
+    Returns:
+        tuple[str, list[_AutoMap]]: A pair of:
+            - The rewritten format string using `extra[...]` placeholders.
+            - A list of mappings `(field, placeholder_key, align, width_spec, cap, trunc)`.
+    """
+    # 1. Initialize state for collected mappings and placeholder indexing
+    mappings: List[_AutoMap] = []
+    idx: int = 0
+
+    # 2. Define a regex replacement function capturing token components
+    def repl(m: re.Match[str]) -> str:
+        nonlocal idx
+        field_spec: str = m.group("field")
+        align: str = m.group("align") or "<"
+        width_spec: str = m.group("width")
+        cap: Optional[int] = int(m.group("cap")) if m.group("cap") else None
+        trunc: Optional[str] = m.group("trunc_in") or m.group("trunc_out")
+
+        # 2.1. Allocate a unique placeholder key for this token
+        placeholder_key: str = f"__lp_auto_{idx}__"
+        idx += 1
+
+        # 2.2. Record mapping metadata for runtime width/truncation processing
+        mappings.append((field_spec, placeholder_key, align, width_spec, cap, trunc))
+
+        # 2.3. Substitute the token with an extra-bound placeholder
+        return "{extra[" + placeholder_key + "]}"
+
+    # 3. Rewrite the format string by replacing all tokens
+    new_fmt: str = _TOKEN_RE.sub(repl, fmt)
+
+    # 4. Return the rewritten format and the collected mappings
+    return new_fmt, mappings

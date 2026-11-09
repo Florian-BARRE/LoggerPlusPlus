@@ -1,198 +1,23 @@
 # ====== Code Summary ======
-# Compose a runtime filter callable that pre-computes dynamic "auto-width"
-# placeholders for log records before delegating to a user-provided filter.
-# Integrates with the auto-width registry to maintain aligned fields.
+# LEGACY-SEAM: re-home — remove in R-00
+# Re-export shim for the per-record auto-width filter composer, now re-homed in
+# `loggerplusplus.auto_width.filter` (the root `runtime` was renamed: its role is
+# the per-record auto-width filter composer, not a generic "runtime"). Keeps the
+# historical import path `loggerplusplus.runtime` resolving while the internal
+# layout moves.
+#
+# This file holds NO logic: it only re-exports the names the pre-move importers
+# (api, and the test suite) still pull from this path, so `import loggerplusplus`
+# and the full suite keep resolving byte-identically.
+# Remove this file in ticket R-00 (the layout re-wiring).
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
-from typing import Any, Optional, Union
+from .auto_width.filter import _build_dict_filter, compose_filter
 
-from loguru import logger as _loguru_logger
-
-from .parser import _AutoMap
-from .registry import _AUTO
-from .width import render_field, sanitize
-
-__all__: list[str] = ["compose_filter"]
-
-# Convenience type for loguru-like records.
-_Record = dict[str, Any]
-
-
-def _build_dict_filter(
-    mapping: Mapping[Any, Any],
-) -> Callable[[_Record], bool]:
-    """
-    Reproduce loguru's own dict-`filter` semantics as a callable.
-
-    A dict filter maps a module name (or "" / None for the root) to a minimum level;
-    the most specific matching prefix of `record["name"]` wins, `False` disables a module,
-    and `True` maps to level 0. We must replicate this here because when an auto-width token
-    is present the user's filter is wrapped (loguru never sees the original dict), so a dict
-    filter would otherwise be silently ignored.
-
-    Args:
-        mapping (Mapping[str | None, Any]): The user-supplied dict filter.
-
-    Returns:
-        Callable[[_Record], bool]: A predicate applying loguru's level-per-module rules.
-    """
-    # 1. Resolve each configured value to a comparable level number (or False to disable)
-    level_per_module: dict[str, Union[int, bool]] = {}
-    for module, level in mapping.items():
-        key = "" if module is None else module
-        if level is False:
-            level_per_module[key] = False
-        elif level is True:
-            level_per_module[key] = 0
-        elif isinstance(level, str):
-            level_per_module[key] = _loguru_logger.level(level).no
-        elif isinstance(level, int):
-            level_per_module[key] = level
-        else:  # pragma: no cover - defensive: loguru rejects other types too
-            raise TypeError(
-                f"Invalid level value for module {module!r} in filter dict: {level!r}"
-            )
-
-    def _dict_filter(record: _Record) -> bool:
-        # 2. Walk from the record's module up its dotted parents, most specific first
-        name: str = record.get("name") or ""
-        while True:
-            level = level_per_module.get(name)
-            if level is False:
-                return False
-            if level is not None:
-                return bool(record["level"].no >= level)
-            if not name:
-                return True
-            index = name.rfind(".")
-            name = name[:index] if index != -1 else ""
-
-    return _dict_filter
-
-
-def compose_filter(
-    user_filter: Optional[Union[Callable[[_Record], bool], Mapping[str, Any]]],
-    auto_mappings: list[_AutoMap],
-) -> Callable[[_Record], bool]:
-    """
-    Build a filter that computes dynamic placeholders and then applies user's filter.
-
-    This wrapper returns a callable compatible with Loguru's `filter` parameter.
-    It precomputes `extra[__lp_auto_i__]` values using `auto_mappings` and the
-    auto-width registry, then evaluates the original `user_filter` when provided.
-
-    The width math lives here, in a loguru *filter*, because loguru calls the filter
-    exactly once per record BEFORE formatting — the only injection point where the padded
-    / truncated string can be computed and written into `record["extra"]`.
-
-    Args:
-        user_filter (Callable[[dict], bool] | Mapping | None): Optional upstream filter.
-            A callable is delegated to; a dict is applied with loguru's own semantics.
-        auto_mappings (list[_AutoMap]): Parsed mappings describing dynamic fields.
-
-    Returns:
-        Callable[[dict], bool]: A filter to be passed to Loguru.
-    """
-    # 0. Pre-build the dict-filter predicate once (never per record) when needed.
-    dict_filter: Optional[Callable[[_Record], bool]] = (
-        _build_dict_filter(user_filter) if isinstance(user_filter, Mapping) else None
-    )
-
-    def _getattr_path(container: Any, path: str) -> Any:
-        """
-        Resolve a dotted attribute path through dict-like and attribute access.
-
-        Args:
-            container (Any): The object or dict to navigate.
-            path (str): Dotted path (e.g., "level.name" or "extra[service]").
-
-        Returns:
-            Any: The resolved value or None if not found.
-        """
-        # 1. Initialize traversal state
-        cur: Any = container
-
-        # 2. Traverse each dotted component
-        for part in path.split("."):
-            if cur is None:
-                return None
-            # 2.1. Dict key access
-            if isinstance(cur, dict) and part in cur:
-                cur = cur.get(part)
-                continue
-            # 2.2. Attribute access
-            if hasattr(cur, part):
-                cur = getattr(cur, part)
-                continue
-            # 2.3. Unresolvable step
-            return None
-
-        # 3. Return the final resolved object
-        return cur
-
-    def resolve(record: _Record, field_spec: str) -> Any:
-        """
-        Resolve a field specification against the log record, honoring `extra[...]`.
-
-        Args:
-            record (_Record): The log record dict provided by Loguru.
-            field_spec (str): Field spec (e.g., "extra[service]", "level.name").
-
-        Returns:
-            Any: The resolved value or None.
-        """
-        # 1. Handle explicit extra[...] lookup
-        if field_spec.startswith("extra[") and field_spec.endswith("]"):
-            key = field_spec[6:-1]
-            return record["extra"].get(key)
-
-        # 2. Try dotted-path resolution over the record
-        val = _getattr_path(record, field_spec)
-        if val is not None:
-            return val
-
-        # 3. Fallback to record["extra"][field_spec]
-        return record["extra"].get(field_spec)
-
-    def built_filter(record: _Record) -> bool:
-        """
-        Compute dynamic placeholders, then apply the user-provided filter if callable.
-
-        Args:
-            record (_Record): Loguru record provided to filter.
-
-        Returns:
-            bool: Whether the record should pass the filter.
-        """
-        # 1. For each auto-mapping, resolve, size, and pad the placeholder value
-        for field_spec, placeholder_key, align, width_spec, cap, trunc in auto_mappings:
-            # 1.1. Resolve source value, normalize to a "-" sentinel, then sanitize
-            #      control/escape sequences (single measurement point; see width.sanitize).
-            raw: Any = resolve(record, field_spec)
-            text: str = sanitize("-" if raw is None else str(raw))
-
-            # 1.2. Determine final width (auto observed vs. fixed, then capped).
-            #      observe_and_width is atomic: a concurrent reset can never shrink this
-            #      record's own width below its length (see registry.observe_and_width).
-            if width_spec == "auto":
-                observed: int = _AUTO.observe_and_width(field_spec, text)
-                width: int = min(observed, cap) if cap is not None else observed
-            else:
-                width = max(1, int(width_spec))
-                if cap is not None:
-                    width = min(width, cap)
-
-            # 1.3. Truncate/hard-cut then pad to the visual width (see width.render_field)
-            record["extra"][placeholder_key] = render_field(text, width, align, trunc)
-
-        # 2. Evaluate the user-provided filter (callable delegated; dict applied; None passes)
-        if callable(user_filter):
-            return bool(user_filter(record))
-        if dict_filter is not None:
-            return dict_filter(record)
-        return True
-
-    # 3. Return the composed filter callable
-    return built_filter
+# Re-exported names (mypy `strict` uses `--no_implicit_reexport`, so the
+# shim's public surface is declared explicitly here).
+__all__: list[str] = [
+    "_build_dict_filter",
+    "compose_filter",
+]
