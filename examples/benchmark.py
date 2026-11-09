@@ -8,8 +8,8 @@ from __future__ import annotations
 import timeit
 from typing import Any, Dict
 
-from loggerplusplus.parser import prepare_auto_format
-from loggerplusplus.runtime import compose_filter
+from loggerplusplus.auto_width.filter import compose_filter
+from loggerplusplus.auto_width.parser import prepare_auto_format
 
 
 def _make_record() -> Dict[str, Any]:
