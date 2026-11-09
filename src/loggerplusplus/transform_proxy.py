@@ -10,7 +10,12 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, Optional, Tuple
 
-__all__: list[str] = ["emit_with_transform", "TransformProxy", "LEVEL_METHODS"]
+__all__: list[str] = [
+    "emit_with_transform",
+    "TransformProxy",
+    "LEVEL_METHODS",
+    "LOGGER_RETURNING",
+]
 
 # The loguru logging methods that accept a leading `message` and gain the `transform`/`raw` keyword.
 LEVEL_METHODS: frozenset[str] = frozenset(
@@ -30,7 +35,9 @@ LEVEL_METHODS: frozenset[str] = frozenset(
 # Logger-returning methods whose result is re-wrapped so the transform keyword survives chaining.
 # `opt` is deliberately NOT here: it stays loguru's own `opt`, so `logger.opt(...).info(...)`
 # keeps exact loguru semantics (loguru's `opt` resets options, so wrapping it would be a trap).
-_LOGGER_RETURNING: frozenset[str] = frozenset({"bind", "patch"})
+# Shared by `transform_proxy.TransformProxy` and `proxy.LoggerPlusPlus` (see R-04): one constant,
+# no per-module copy.
+LOGGER_RETURNING: frozenset[str] = frozenset({"bind", "patch"})
 
 # Number of Python frames between the user's call site and the loguru level method we invoke:
 # the `__getattr__` lambda, then `emit_with_transform` itself. We pass this to loguru's
@@ -146,7 +153,7 @@ class TransformProxy:
         attr = getattr(self._core, name)
 
         # 3. Re-wrap logger-returning methods so the keyword survives chaining.
-        if name in _LOGGER_RETURNING and callable(attr):
+        if name in LOGGER_RETURNING and callable(attr):
             return lambda *a, **k: TransformProxy(attr(*a, **k))
         return attr
 
