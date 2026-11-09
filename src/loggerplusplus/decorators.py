@@ -18,9 +18,16 @@ import functools
 import inspect
 import time
 from collections.abc import Callable, Iterable
-from typing import Any, Dict, Optional, Tuple, TypeVar
+from typing import Any, Optional, TypeVar
 
 from loguru import logger as _loguru_logger
+
+from .redact import (  # LEGACY-SEAM: re-home — remove in R-00 (Redact is permanent; the rest re-exports)
+    SENSITIVE_KEYS,
+    Redact,
+    _redact_call,  # noqa: F401 - re-export seam consumed by tests/test_decorators_enriched.py
+    _shorten,  # noqa: F401 - re-export seam consumed by tests/test_decorators_enriched.py
+)
 
 __all__: list[str] = ["catch", "opt", "log_timing", "log_io", "SENSITIVE_KEYS"]
 
@@ -28,21 +35,6 @@ R = TypeVar("R")
 
 # A logging hook: (log, func, args, kwargs[, extra...]) -> arbitrary carry state.
 _Hook = Callable[..., Any]
-
-# Default case-insensitive substrings marking an argument as sensitive; pass this
-# (or your own list) as `log_io(redact=...)` to mask matching values in the logged call.
-SENSITIVE_KEYS: Tuple[str, ...] = (
-    "password",
-    "passwd",
-    "secret",
-    "token",
-    "api_key",
-    "apikey",
-    "authorization",
-    "credential",
-    "private_key",
-)
-_REDACTED: str = "***"
 
 
 def _emit(log: Any, level: str, build: Callable[[], str]) -> None:
@@ -63,100 +55,6 @@ def _emit(log: Any, level: str, build: Callable[[], str]) -> None:
         log.opt(lazy=True).log(level, "{_m}", _m=build)
     except Exception:  # noqa: BLE001 - a logging failure must never abort the caller
         pass
-
-
-def _is_sensitive(name: str, patterns: Tuple[str, ...]) -> bool:
-    """Return True when `name` contains any (case-insensitive) sensitive substring."""
-    lowered = name.lower()
-    return any(p.lower() in lowered for p in patterns)
-
-
-def _deep_redact(value: Any, patterns: Tuple[str, ...]) -> Any:
-    """Recurse into dict values, masking those whose key matches a sensitive pattern."""
-    if isinstance(value, dict):
-        return {
-            k: (
-                _REDACTED
-                if _is_sensitive(str(k), patterns)
-                else _deep_redact(v, patterns)
-            )
-            for k, v in value.items()
-        }
-    return value
-
-
-def _redact_call(
-    func: Any,
-    args: Tuple[Any, ...],
-    kwargs: Dict[str, Any],
-    patterns: Iterable[str],
-) -> Tuple[Tuple[Any, ...], Dict[str, Any]]:
-    """
-    Mask sensitive arguments by parameter name (positional and keyword) and in nested dicts.
-
-    Positional arguments are matched to their parameter name via the function signature, so
-    a secret passed positionally is masked too. Matching is case-insensitive substring;
-    recursion covers dict values but not arbitrary objects.
-
-    Args:
-        func (Any): The decorated function (for its signature).
-        args (tuple): Positional call arguments.
-        kwargs (dict): Keyword call arguments.
-        patterns (Iterable[str]): Sensitive name substrings.
-
-    Returns:
-        tuple: (shown_args, shown_kwargs) with sensitive values replaced by "***".
-    """
-    pats = tuple(patterns)
-    if not pats:
-        return args, kwargs
-    try:
-        names = list(inspect.signature(func).parameters)
-    except (TypeError, ValueError):  # builtins / signature-less callables
-        names = []
-    shown_args = tuple(
-        (
-            _REDACTED
-            if (i < len(names) and _is_sensitive(names[i], pats))
-            else _deep_redact(a, pats)
-        )
-        for i, a in enumerate(args)
-    )
-    shown_kwargs = {
-        k: (_REDACTED if _is_sensitive(k, pats) else _deep_redact(v, pats))
-        for k, v in kwargs.items()
-    }
-    return shown_args, shown_kwargs
-
-
-def _shorten(value: Any, max_len: Optional[int]) -> Any:
-    """
-    Return `value` unchanged, or a truncated repr string when its repr exceeds max_len.
-
-    The returned truncated string is at most `max_len` characters (ellipsis included).
-    """
-    if max_len is None:
-        return value
-    text = repr(value)
-    if len(text) <= max_len:
-        return value
-    if max_len <= 1:
-        return "…"
-    return text[: max_len - 1] + "…"
-
-
-def _shorten_args(args: Tuple[Any, ...], max_len: Optional[int]) -> Tuple[Any, ...]:
-    """Truncate each positional argument's repr to max_len (no-op when None)."""
-    if max_len is None:
-        return args
-    return tuple(_shorten(a, max_len) for a in args)
-
-
-def _shorten_kwargs(kwargs: Dict[str, Any], max_len: Optional[int]) -> Dict[str, Any]:
-    """Truncate each keyword argument's repr to max_len (no-op when None)."""
-    if max_len is None:
-        return kwargs
-    return {k: _shorten(v, max_len) for k, v in kwargs.items()}
 
 
 def _select_logger(
@@ -437,9 +335,11 @@ def log_io(
         if log_args:
 
             def build() -> str:
-                shown_args, shown_kwargs = _redact_call(func, args, kwargs, redact)
-                shown_args = _shorten_args(shown_args, max_value_length)
-                shown_kwargs = _shorten_kwargs(shown_kwargs, max_value_length)
+                shown_args, shown_kwargs = Redact.redact_call(
+                    func, args, kwargs, redact
+                )
+                shown_args = Redact.shorten_args(shown_args, max_value_length)
+                shown_kwargs = Redact.shorten_kwargs(shown_kwargs, max_value_length)
                 return message_args.format(
                     func=func.__name__, args=shown_args, kwargs=shown_kwargs
                 )
@@ -455,7 +355,7 @@ def log_io(
                 log,
                 level,
                 lambda: message_return.format(
-                    func=func.__name__, result=_shorten(result, max_value_length)
+                    func=func.__name__, result=Redact.shorten(result, max_value_length)
                 ),
             )
 
