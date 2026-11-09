@@ -18,6 +18,9 @@ import pytest
 from loggerplusplus.parser import prepare_auto_format
 from loggerplusplus.runtime import compose_filter
 
+# Shared harness: _render/_run for auto-width filter tests
+from tests.conftest import _render, _run  # noqa: F401
+
 _AutoMap = Tuple[str, str, str, str, Optional[int], Optional[str]]
 
 
@@ -28,12 +31,9 @@ def _record(extra: Optional[Dict[str, Any]] = None, **fields: Any) -> Dict[str, 
     return rec
 
 
-def _run(fmt: str, record: Dict[str, Any]) -> Dict[str, Any]:
-    """Parse `fmt`, compose the filter, run it against `record`, return record.extra."""
-    _new_fmt, mappings = prepare_auto_format(fmt)
-    flt = compose_filter(None, mappings)
-    flt(record)
-    return record["extra"]
+def _rec(**extra: Any) -> Dict[str, Any]:
+    """Record carrying only an extra bag (alias for convenience)."""
+    return {"extra": dict(extra)}
 
 
 def test_none_filter_passes() -> None:
@@ -134,18 +134,6 @@ def test_cap_limits_auto_width() -> None:
     rec = _record({"capped": "abcdefgh"})
     flt(rec)
     assert len(rec["extra"]["__lp_auto_0__"]) == 3
-
-
-def _render(token: str, record: Dict[str, Any]) -> str:
-    """Render a single-token format against `record` and return the computed placeholder."""
-    _fmt, mappings = prepare_auto_format(token)
-    compose_filter(None, mappings)(record)
-    return record["extra"]["__lp_auto_0__"]
-
-
-def _rec(**extra: Any) -> Dict[str, Any]:
-    """Record carrying only an extra bag."""
-    return {"extra": dict(extra)}
 
 
 # --- truncation x alignment (value longer than width) --------------------------------

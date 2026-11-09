@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 # ====== Standard Library Imports ======
-from typing import Any, Dict
+from typing import Any
 
 # ====== Third-Party Imports ======
 import pytest
@@ -18,14 +18,15 @@ from loggerplusplus import (
     reset_widths,
     set_max_auto_width,
 )
-from loggerplusplus.parser import prepare_auto_format
 from loggerplusplus.registry import (
     _AUTO,
     _IDENTIFIER_SPEC,
     _AutoWidthRegistry,
     register_identifier,
 )
-from loggerplusplus.runtime import compose_filter
+
+# Shared harness: _render_value is called as `_render` locally for brevity
+from tests.conftest import _render_value as _render  # noqa: F401
 
 
 def test_observe_tracks_maximum() -> None:
@@ -77,14 +78,6 @@ def _clean_registry() -> Any:
     yield
     reset_widths()
     set_max_auto_width(None)
-
-
-def _render(token: str, value: str) -> str:
-    """Render one auto token for `value` and return the placeholder."""
-    _fmt, mappings = prepare_auto_format(token)
-    rec: Dict[str, Any] = {"extra": {"x": value}}
-    compose_filter(None, mappings)(rec)
-    return rec["extra"]["__lp_auto_0__"]
 
 
 def test_observed_widths_reports_and_reset_clears() -> None:

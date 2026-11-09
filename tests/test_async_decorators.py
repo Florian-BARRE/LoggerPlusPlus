@@ -8,20 +8,10 @@ import asyncio
 from typing import Any, List
 
 import pytest
-from loguru import logger
 
 from loggerplusplus import log_io, log_timing
 
-
-@pytest.fixture
-def custom_cap() -> Any:
-    """Capture emitted log messages to a list, then remove the sink."""
-    messages: List[str] = []
-    sink_id = logger.add(messages.append, level="DEBUG", format="{message}")
-    try:
-        yield messages
-    finally:
-        logger.remove(sink_id)
+# Shared harness: custom_cap fixture auto-imported by pytest
 
 
 def test_log_io_async_logs_awaited_result(custom_cap: List[str]) -> None:

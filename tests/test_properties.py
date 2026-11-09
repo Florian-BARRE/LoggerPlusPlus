@@ -4,26 +4,18 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
-
 from hypothesis import given
 from hypothesis import strategies as st
 
 from loggerplusplus.parser import prepare_auto_format
-from loggerplusplus.runtime import compose_filter
 from loggerplusplus.width import visual_width
+
+# Shared harness: _render_value is aliased to _render locally for brevity
+from tests.conftest import _render_value as _render  # noqa: F401
 
 _MODES = ["left", "right", "middle"]
 # ASCII letters: len == visual width, so exact-slice invariants hold for these tests.
 _ascii = st.text(alphabet="abcdefghijklmnopqrstuvwxyz", min_size=3, max_size=120)
-
-
-def _render(token: str, value: str) -> str:
-    """Render one fixed-width token for `value` and return the padded placeholder."""
-    _fmt, mappings = prepare_auto_format(token)
-    rec: Dict[str, Any] = {"extra": {"x": value}}
-    compose_filter(None, mappings)(rec)
-    return rec["extra"]["__lp_auto_0__"]
 
 
 @given(
