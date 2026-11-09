@@ -26,6 +26,14 @@ _line = st.text(
     ),
     min_size=1,
 )
+# A short prefix that is itself free of line breaks (so it cannot add lines of its own).
+_prefix = st.text(
+    alphabet=st.characters(
+        blacklist_characters=_LINE_BREAKS, blacklist_categories=("Cs",)
+    ),
+    min_size=1,
+    max_size=3,
+)
 
 
 @settings(max_examples=50)
@@ -89,7 +97,7 @@ def test_chain_is_associative(s: str) -> None:
             blacklist_characters=_LINE_BREAKS, blacklist_categories=("Cs",)
         )
     ),
-    prefix=st.text(min_size=1, max_size=3),
+    prefix=_prefix,
 )
 def test_indent_single_line_only_adds_the_prefix(s: str, prefix: str) -> None:
     """A single line grows by exactly one prefix and keeps its content (empty -> prefix)."""
@@ -101,11 +109,11 @@ def test_indent_single_line_only_adds_the_prefix(s: str, prefix: str) -> None:
 @settings(max_examples=50)
 @given(
     lines=st.lists(_line, min_size=1, max_size=6),
-    prefix=st.text(min_size=1, max_size=3),
+    prefix=_prefix,
 )
 def test_indent_adds_one_prefix_per_line(lines: List[str], prefix: str) -> None:
     """The result length is len(s) plus one prefix per line; the content is untouched."""
     s = "\n".join(lines)
     out = indent(prefix)(s)
     assert len(out) == len(s) + len(lines) * len(prefix)
-    assert out.splitlines() == [prefix + line for line in lines]
+    assert out.split("\n") == [prefix + line for line in lines]
