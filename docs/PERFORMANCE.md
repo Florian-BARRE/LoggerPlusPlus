@@ -11,11 +11,15 @@ wall-clock times.
 
 ## BASELINE
 
-Measured once from the current code on this machine.
+Re-recorded from the current code (commit 118c522 onward) on this machine:
+median of 5 consecutive runs (7921 to 8955 ns/record; expect roughly 10% run-to-run
+noise). The timed workload INCLUDES the `copy.deepcopy(RECORD)` done on every
+iteration by `_make_record()` (the filter may mutate `extra`), so this number is
+not comparable with any earlier one recorded from a fresh dict literal.
 
 | Metric | Value | Python | Platform | Date |
 |---|---|---|---|---|
-| ns/record (auto-width filter) | 6313 | 3.12.15 | Linux-6.12.113+deb13-cloud-amd64-x86_64-with-glibc2.41 | 2026-11-09 |
+| ns/record (auto-width filter) | 8456 | 3.12.15 | Linux-6.12.113+deb13-cloud-amd64-x86_64-with-glibc2.41 | 2026-11-09 |
 
 ## How to use it
 
