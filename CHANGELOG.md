@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.2.1](https://github.com/Florian-BARRE/LoggerPlusPlus/compare/loggerplusplus-v1.2.0...loggerplusplus-v1.2.1) (2026-11-10)
+
+
+### Performance Improvements
+
+* **benchmark:** You are a refactoring worker. Phase 5 (execution) of the loggerplusplus refactoring campaign: one… ([#42](https://github.com/Florian-BARRE/LoggerPlusPlus/issues/42)) ([acb628d](https://github.com/Florian-BARRE/LoggerPlusPlus/commit/acb628d63fb2dfec448eb4a01c8940aad965dfc7))
+
+
+### Documentation
+
+* **agents:** rewrite the agent texts from the project's facts ([#17](https://github.com/Florian-BARRE/LoggerPlusPlus/issues/17)) ([88f5878](https://github.com/Florian-BARRE/LoggerPlusPlus/commit/88f587850ebb4168af1e03cb2cc5f6a9a5617da4))
+* **ci:** correct gate policy and contributor guidance ([#26](https://github.com/Florian-BARRE/LoggerPlusPlus/issues/26)) ([c18cf7a](https://github.com/Florian-BARRE/LoggerPlusPlus/commit/c18cf7aa3d666065bb4fe5c8ffa82138693c9ec5))
+* **contributing:** note that inline gitleaks:allow is ignored by the secrets job ([59a605b](https://github.com/Florian-BARRE/LoggerPlusPlus/commit/59a605ba93e39483373df995d3c6cdf82f901930))
+* **contributing:** sync local commands and CI gate with the secrets job ([997222e](https://github.com/Florian-BARRE/LoggerPlusPlus/commit/997222e0e87867c321f185d5908f49c7cdbfb502))
+* **examples:** describe benchmark.py as a performance reference ([#44](https://github.com/Florian-BARRE/LoggerPlusPlus/issues/44)) ([2618a6d](https://github.com/Florian-BARRE/LoggerPlusPlus/commit/2618a6ded889f435afab55d664cfdf742b8e50c2))
+* fix review findings in CLAUDE.md and CONTRIBUTING ([5a9d478](https://github.com/Florian-BARRE/LoggerPlusPlus/commit/5a9d478f6a0e1be301b26db74a1bd5a28990a1c5))
+* **refactor:** Phase 4 migration plan + R-08 row in target ([#37](https://github.com/Florian-BARRE/LoggerPlusPlus/issues/37)) ([a60788e](https://github.com/Florian-BARRE/LoggerPlusPlus/commit/a60788e95d246694c03d1deffbce5dcf11144dbc))
+* **refactor:** You are a doc-keeper. Create EXACTLY two campaign documents for the loggerplusplus refactoring… ([#31](https://github.com/Florian-BARRE/LoggerPlusPlus/issues/31)) ([f37cd01](https://github.com/Florian-BARRE/LoggerPlusPlus/commit/f37cd01294daa7484233c2d82d77f3460f0a1aef))
+
 ## [1.2.0](https://github.com/Florian-BARRE/LoggerPlusPlus/compare/loggerplusplus-v1.1.0...loggerplusplus-v1.2.0) (2026-09-16)
 
 
