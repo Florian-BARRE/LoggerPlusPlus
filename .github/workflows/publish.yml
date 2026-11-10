@@ -72,34 +72,34 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install Poetry
-        run: pipx install poetry
+      - name: Install uv
+        run: pip install uv
 
       - name: Verify tag == pyproject == __init__ version
         shell: bash
         run: |
           set -euo pipefail
           TAG_VERSION="${{ steps.resolve.outputs.version }}"
-          POETRY_VERSION="$(poetry version -s)"
+          PROJECT_VERSION="$(python -c 'import tomllib,pathlib; print(tomllib.loads(pathlib.Path("pyproject.toml").read_text())["project"]["version"])')"
           INIT_VERSION="$(python -c 'import re,pathlib; print(re.search(r"__version__\s*=\s*\"([^\"]+)\"", pathlib.Path("src/loggerplusplus/__init__.py").read_text()).group(1))')"
 
           echo "Tag:       $TAG_VERSION"
-          echo "pyproject: $POETRY_VERSION"
+          echo "pyproject: $PROJECT_VERSION"
           echo "__init__:  $INIT_VERSION"
 
-          if [[ "$TAG_VERSION" != "$POETRY_VERSION" ]]; then
-            echo "::error::Version mismatch (tag=$TAG_VERSION, pyproject=$POETRY_VERSION)"
+          if [[ "$TAG_VERSION" != "$PROJECT_VERSION" ]]; then
+            echo "::error::Version mismatch (tag=$TAG_VERSION, pyproject=$PROJECT_VERSION)"
             exit 1
           fi
-          if [[ "$INIT_VERSION" != "$POETRY_VERSION" ]]; then
-            echo "::error::__init__.__version__ ($INIT_VERSION) != pyproject ($POETRY_VERSION)"
+          if [[ "$INIT_VERSION" != "$PROJECT_VERSION" ]]; then
+            echo "::error::__init__.__version__ ($INIT_VERSION) != pyproject ($PROJECT_VERSION)"
             exit 1
           fi
           echo "Version match confirmed (tag = pyproject = __init__)"
 
       - name: Build distributions
         run: |
-          poetry build
+          uv build
           ls -lh dist/
 
       - name: Publish to TestPyPI

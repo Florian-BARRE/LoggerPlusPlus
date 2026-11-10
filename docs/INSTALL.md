@@ -20,12 +20,6 @@ With pip:
 pip install loggerplusplus
 ```
 
-With Poetry:
-
-```bash
-poetry add loggerplusplus
-```
-
 With uv:
 
 ```bash

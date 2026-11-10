@@ -6,17 +6,17 @@ or remove an exported name (formats are resolved by name) without a major versio
 
 ## Prerequisites
 
-- [Poetry](https://python-poetry.org/docs/#installation) — manages the venv, the lockfile, and the
-  build backend (`poetry-core`, `src/` layout).
+- [uv](https://docs.astral.sh/uv/) — manages the venv, the lockfile, and the build backend
+  (hatchling, `src/` layout).
 
 ## Working locally
 
 ```bash
-poetry install                 # install deps + the dev group (black, ruff, mypy, pytest, hypothesis)
-poetry run black src/ tests/ examples/        # auto-format
-poetry run ruff check src/ tests/ examples/   # lint
-poetry run mypy src            # type-check
-poetry run pytest              # unit suite (100% coverage, gate is 95%)
+uv sync                     # install deps + the dev group (black, ruff, mypy, pytest, hypothesis)
+uv run black src/ tests/ examples/        # auto-format
+uv run ruff check src/ tests/ examples/   # lint
+uv run mypy src             # type-check
+uv run pytest               # unit suite (100% coverage, gate is 95%)
 ```
 
 ## The Python 3.9 floor (non-negotiable)
@@ -37,7 +37,7 @@ The table also lists the separate drift and security workflows:
 |---|---|
 | `lint` | `black --check` + `ruff check` + `mypy src` |
 | `test` | **Linux/macOS/Windows × Python 3.9 → 3.13** matrix: `pytest` with a 95% coverage gate |
-| `build` | `poetry build` + `twine check` + a clean-venv smoke install |
+| `build` | `uv build` + `twine check` + a clean-venv smoke install |
 | `secrets` | fails on tracked secret-looking files (`.env`, `.env.*`, `*.pem`, `*.key`, `.pypirc`, `credentials*.json`, … — `*.example` allowed) + `gitleaks` (pinned, sha256-checked, gitleaks default rules only: the repo's `.gitleaks.toml` / `.gitleaksignore` and inline `gitleaks:allow` comments are ignored, so a PR cannot weaken the scan) over the pushed/PR commit range (a new branch or a force push scans the full reachable history) |
 | [`aidk-checks.yml`](.github/workflows/aidk-checks.yml) | AI Dev Kit drift rules on each pull request |
 | [`codeql.yml`](.github/workflows/codeql.yml) | CodeQL analysis on pushes and pull requests to `main`, and weekly |
@@ -64,5 +64,3 @@ Releases are driven by [release-please](https://github.com/googleapis/release-pl
 
 - Never configure sinks at import time and never `print()` inside the library — that is the
   consuming application's job.
-- Runtime dependencies stay minimal (`loguru`, `colorama`, and `win32-setctime` on Windows only);
-  see `pyproject.toml` and keep `requirements.txt` in sync.

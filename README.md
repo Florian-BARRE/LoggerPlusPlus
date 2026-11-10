@@ -45,7 +45,7 @@ to be shared across every service in a stack.
 ```bash
 pip install loggerplusplus
 # or
-poetry add loggerplusplus
+uv add loggerplusplus
 ```
 
 Requires Python 3.9+. Big ASCII-art banners (`Banner.figlet`) need the optional extra:
@@ -302,11 +302,11 @@ src/loggerplusplus/
 ## Development
 
 ```bash
-poetry install
-poetry run black src tests
-poetry run ruff check src tests
-poetry run mypy src
-poetry run pytest            # 100% coverage; the CI gate is 95%
+uv sync                        # install deps + dev group (black, ruff, mypy, pytest, hypothesis)
+uv run black src tests         # auto-format
+uv run ruff check src tests    # lint
+uv run mypy src                # type-check
+uv run pytest                  # 100% coverage; the CI gate is 95%
 ```
 
 The CI matrix runs the suite on Python 3.9–3.13 across Linux, macOS, and Windows. See

@@ -1,6 +1,6 @@
 [build-system]
-requires = ["poetry-core>=2.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "loggerplusplus"
@@ -32,30 +32,28 @@ dependencies = [
     'win32-setctime>=1.2.0; sys_platform == "win32"',
 ]
 
-# Optional extras. `banners` powers Banner.figlet (big ASCII art); the box/rule banners and the
-# transform mechanism itself stay zero-dependency. Optional deps are NOT mirrored into
-# requirements.txt (that mirrors the runtime deps above only).
-[project.optional-dependencies]
-banners = ["pyfiglet>=1.0.4,<2.0"]
-
+# Dev dependencies (replaces [tool.poetry.group.dev.dependencies]).
+# uv installs these via `uv sync` (all groups) or `uv add --dev`.
 [project.urls]
 Homepage = "https://github.com/Florian-BARRE/LoggerPlusPlus"
 Repository = "https://github.com/Florian-BARRE/LoggerPlusPlus"
 Documentation = "https://github.com/Florian-BARRE/LoggerPlusPlus#readme"
 
-[tool.poetry]
-packages = [{ include = "loggerplusplus", from = "src" }]
+[project.optional-dependencies]
+banners = ["pyfiglet>=1.0.4,<2.0"]
 
-[tool.poetry.group.dev.dependencies]
-# pytest + pytest-cov must install on the 3.9 test job, so they stay on 3.9-compatible majors.
-pytest = "^8.3"
-pytest-cov = "^7.1"
-hypothesis = "^6.0"
-ruff = "^0.17"
-# Lint-only tools run on the 3.11 `lint` job; newest majors dropped 3.9, so gate them to >=3.10
-# (they are never needed on the 3.9 test job).
-black = { version = "^26.10", python = ">=3.10" }
-mypy = { version = "^2.4", python = ">=3.10" }
+[dependency-groups]
+dev = [
+    # pytest + pytest-cov must install on the 3.9 test job, so they stay on 3.9-compatible majors.
+    "pytest>=8.3,<9.0",
+    "pytest-cov>=7.1,<8.0",
+    "hypothesis>=6.0,<7.0",
+    "ruff>=0.17,<0.18",
+    # Lint-only tools run on the 3.11 `lint` job; newest majors dropped 3.9, so gate them to >=3.10
+    # (they are never needed on the 3.9 test job).
+    "black>=26.10; python_version >= \"3.10\"",
+    "mypy>=2.4; python_version >= \"3.10\"",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

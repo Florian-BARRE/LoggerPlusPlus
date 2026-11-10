@@ -14,7 +14,7 @@ a worker in a worktree) and its method.
 <!-- aidk:end -->
 
 Read by every agent session (Claude Code through `CLAUDE.md`, Codex directly). Project-specific
-facts only; generic agent rules (planning, delegation, commits, review, memory, definition of done)
+facts only; generic agent rules (planning, delegation, review, memory, definition of done)
 come from the dev center's managed layer. All checks: `aidk verify` from the repository root (they
 live in `.aidk/project.toml`).
 
@@ -36,7 +36,7 @@ transforms. Runtime deps: `loguru`, `colorama`, `win32-setctime` (Windows only),
 
 ## Layout
 
-- `src/loggerplusplus/` — the package (src layout, Poetry). Public surface in
+- `src/loggerplusplus/` — the package (src layout, PEP 621 / hatchling). Public surface in
   `src/loggerplusplus/__init__.py` (`__all__`, `__version__`).
 - `src/loggerplusplus/formats/` — the named formats (`ClassicFormat`, `ShortFormat`, `OpsFormat`,
   `DebugFormat`, `MinimalFormat`, `FileFormat`, `PlainFormat`), resolved by name downstream.
@@ -48,11 +48,11 @@ transforms. Runtime deps: `loguru`, `colorama`, `win32-setctime` (Windows only),
 ## Running locally
 
 ```bash
-poetry install --no-interaction
-poetry run black src/ tests/ examples/   # auto-format
+uv sync                          # install deps + dev group (black, ruff, mypy, pytest, hypothesis)
+uv run black src/ tests/ examples/   # auto-format
 ```
 
-A library: no dev server, no `[stack]`. Orca's worktree setup (`orca.yaml`) installs the Poetry env
+A library: no dev server, no `[stack]`. Orca's worktree setup (`orca.yaml`) runs `uv sync`
 and the kit's git hooks (format + lint at each commit, types + tests before each push).
 
 ## Invariants
@@ -69,8 +69,6 @@ and the kit's git hooks (format + lint at each commit, types + tests before each
 - Every name in `loggerplusplus.__all__` and every concrete format class must appear in
   `README.md` or `docs/*.md`, and backticked repo paths there must exist (the coherence test fails
   otherwise).
-- Keep runtime dependencies minimal; `requirements.txt` mirrors the runtime deps of
-  `pyproject.toml` (not the extras).
 
 ## Releases
 
@@ -81,7 +79,7 @@ and the kit's git hooks (format + lint at each commit, types + tests before each
   release PR; once that PR is merged it creates the tag and the GitHub Release, then dispatches
   `publish.yml` (`workflow_dispatch`, inputs `tag` and `repository=pypi`).
 - `.github/workflows/publish.yml` re-runs `quality.yml` on the tagged code, checks that the tag,
-  `pyproject.toml` and `__version__` agree, builds with `poetry build` and uploads through PyPI
+  `pyproject.toml` and `__version__` agree, builds with `uv build` and uploads through PyPI
   Trusted Publishing (OIDC, GitHub environments `pypi` / `testpypi`, no stored token). A manual push
   of a `v*` tag also publishes to PyPI (and creates the GitHub Release).
 - Agents never edit, dispatch or run `release-please.yml` or `publish.yml`, never push tags and never
