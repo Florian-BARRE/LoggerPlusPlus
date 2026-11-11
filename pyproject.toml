@@ -45,7 +45,7 @@ banners = ["pyfiglet>=1.0.4,<2.0"]
 [dependency-groups]
 dev = [
     # pytest + pytest-cov must install on the 3.9 test job, so they stay on 3.9-compatible majors.
-    "pytest>=8.3,<9.0",
+    "pytest>=8.3,<10.0",
     "pytest-cov>=7.1,<8.0",
     "hypothesis>=6.0,<7.0",
     "ruff>=0.17,<0.18",
